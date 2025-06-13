@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import Dict, List, Optional
 import pickle
+import re
 
 PIC_SUFFIXES = ['png', 'jpg', 'jpeg', 'bmp', 'raw']
 AUDIO_SUFFIXES = ['ogg', 'mp3', 'wav', 'flac']
@@ -69,6 +70,25 @@ def update_index(asset_dir: Path, art_dir_name: Optional[str]):
     index['cg'] = index_hierarchy(art_dir / 'cg', PIC_SUFFIXES)
     index['fg'] = index_hierarchy(art_dir / 'fg', PIC_SUFFIXES)
     index['se'] = index_simple_dir(art_dir / 'se', AUDIO_SUFFIXES)
+    # Deal with stance of fg specially
+    chara_pattern = re.compile(r'([a-zA-z]+)(\d+)')
+    new_fg_dict = {}
+    for key, value in index['fg'].items():
+        match_object = chara_pattern.fullmatch(key)
+        if match_object is None:
+            new_fg_dict[key] = value
+        else:
+            chara_name, stance = match_object.groups()
+            if chara_name not in new_fg_dict:
+                new_fg_dict[chara_name] = {}
+            # list the same expression with different stance
+            # This section of code can be vulnerable to asset directory structure
+            for expression, path in value.items():
+                if expression in new_fg_dict[chara_name]:
+                    new_fg_dict[chara_name][expression].append(path)
+                else:
+                    new_fg_dict[chara_name][expression] = [path]
+    index['fg'] = new_fg_dict
     with open(asset_dir / 'index.pickle', 'wb') as f:
         pickle.dump(index, f)
     return index

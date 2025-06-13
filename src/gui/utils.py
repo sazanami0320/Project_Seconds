@@ -3,6 +3,7 @@ from core import WORKSPACE, MAPS_DIR, analyze, output
 from index import get_index
 from ir import Unbabel
 from pathlib import Path
+from functools import partial
 
 def to_ast(target_folder: Path):
     source_name = target_folder.stem
@@ -18,8 +19,15 @@ def to_ast(target_folder: Path):
     titles = list(map(lambda path: path.stem, sources))
     output(HomoSapiensScipt(), objs, titles, output_folder / f"{source_name}.txt", count=True)
     output(ASTScript(), objs, titles, output_folder / f"{source_name}_ast.json")
+    return objs
 
-def try_to_ir(obj):
+def to_ir(objs, suppress_level: int, ask_hook):
     asset_index = get_index(WORKSPACE / 'assets')
     ir_compiler = Unbabel(MAPS_DIR / 'ir.json', asset_index)
-    objs = ir_compiler(objs, supress_level=0)
+    hooks = {
+        'ask_bg': partial(ask_hook, '背景', {'背景': asset_index['bg'], 'CG': asset_index['cg']}),
+        'ask_cg': partial(ask_hook, 'CG', {'CG': asset_index['cg'], '背景': asset_index['bg']}),
+        'ask_fg': partial(ask_hook, '立绘', {'角色表情': asset_index['fg']}),
+        'ask_se': partial(ask_hook, '音效', {'音效': asset_index['se']}),
+    }
+    objs = ir_compiler(objs, suppress_level=suppress_level, **hooks)

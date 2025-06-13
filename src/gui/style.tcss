@@ -11,6 +11,16 @@ Error {
     border: solid red;
     margin: 0 8;
     min-height: 6;
+    height: auto;
+}
+
+AssetMatcher {
+    min-height: 8;
+    height: auto;
+}
+
+#error-msg {
+    min-height: 6;
 }
 
 #main-cs {

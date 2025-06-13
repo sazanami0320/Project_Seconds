@@ -29,5 +29,5 @@ if __name__ == '__main__':
 # AST => IR
     index = get_index(WORKSPACE / 'assets')
     ir_compiler = Unbabel(MAPS_DIR / 'ir.json', index)
-    objs = ir_compiler(objs, supress_level=0)
+    objs = ir_compiler(objs, suppress_level=0)
     

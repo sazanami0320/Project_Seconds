@@ -1,14 +1,17 @@
-from textual import on
+from textual import on, work
 from textual.app import App, ComposeResult
 from textual.containers import VerticalScroll
 from textual.widgets import Header, Footer, ContentSwitcher, Static
+from typing import Tuple, Any
 from pathlib import Path
+from time import sleep
 
 from exception import SourcedException
 from .script_select import ScriptSelect
+from .asset_match import AssetMatcher
 from .alarm import Alarm
 from .error import Error
-from .utils import to_ast
+from .utils import to_ast, to_ir
 
 GUI_DIR = Path(__file__).resolve().parent
 
@@ -19,31 +22,48 @@ class MakeApp(App):
 
     def __init__(self):
         super().__init__(css_path=GUI_DIR / 'style.tcss')
-        self.call_record = None
+        self.suppress_level = 0
+        self.poll_lock = False
+        self.match_result = None
 
     def compose(self) -> ComposeResult:
         yield Header()
-        with VerticalScroll():
+        with VerticalScroll(can_focus=False):
             with ContentSwitcher(initial='src-select', id='main-cs'):
                 yield ScriptSelect(id='src-select')
-                yield Static('Dummy', id='asset-match')
+                yield AssetMatcher(id='asset-match')
                 yield Alarm(id='alarm')
                 yield Error(id='error')
         yield Footer()
 
+    def set_content(self, content_id: str):
+        cs = self.query_exactly_one('#main-cs')
+        cs.current = content_id
+        cs.visible_content.focus()
+        if content_id == 'src-select':
+            cs.disabled = False
+
     def alarm(self, msg: str):
         self.query_exactly_one(Alarm).content = msg
-        self.query_exactly_one('#main-cs').current = 'alarm'
+        self.set_content('alarm')
     
     def reset(self):
-        self.query_exactly_one('#main-cs').current = 'src-select'
+        self.set_content('src-select')
+
+    def lock(self):
+        self.poll_lock = True
+
+    def is_locked(self):
+        return self.poll_lock
+
+    def get_match_result(self):
+        return self.match_result
     
     @on(ScriptSelect.ScriptSelected)
     def on_src_selected(self, message: ScriptSelect.ScriptSelected):
-        self.alarm(f"正在尝试编译{message.script_dir.stem}...")
-        self.query_exactly_one(Error).script_dir = message.script_dir
-        # No asyncs for such simple project, plz!
-        self.wrapped_call(to_ast, message.script_dir)
+        self.script_dir = message.script_dir
+        self.suppress_level = message.suppress_level
+        self.start_compile()
 
     @on(Error.FailMessage)
     def on_fail(self):
@@ -52,20 +72,45 @@ class MakeApp(App):
 
     @on(Error.RetryMessage)
     def on_retry(self):
-        # Reset to step one
-        self.wrapped_call(self.call_record[0], *self.call_record[1], **self.call_record[2])
+        self.start_compile()
 
-    def wrapped_call(self, func, *args, **kwargs):
-        self.query_exactly_one(Error).content = '加载中'
-        self.call_record = (func, args, kwargs)
+    @on(AssetMatcher.MatchFinish)
+    def on_matched(self, msg: AssetMatcher.MatchFinish):
+        self.match_result = msg.match_result
+        self.poll_lock = False
+    
+    @work(exclusive=True, thread=True)
+    def start_compile(self):
+        # Startpoint. This resembles the main function in make.py.
+        # With workers in textual we now have a full thread for working.
+        # It's way too hard to fix all my previous serial codes into async-aware ones
+        # so threading might be the best solution.
+        self.call_from_thread(self.alarm, f"正在尝试编译{self.script_dir.stem}...")
+        self.query_exactly_one(Error).script_dir = self.script_dir # This is not reactive
+        status, objs = self.wrapped_call(to_ast, self.script_dir)
+        # Any fail would end this worker.
+        if not status:
+            return
+        status, irs = self.wrapped_call(to_ir, objs, self.suppress_level, self.ask_hook)
+    
+    # The functions below all runs in a different thread and should be taken care of as the result.
+    def wrapped_call(self, func, *args, **kwargs) -> Tuple[bool, Any]:
+        self.call_from_thread(self.query_exactly_one(Error).reset)
         try:
-            func(*args, **kwargs)
+            ret = func(*args, **kwargs)
         except SourcedException as e:
-            self.query_exactly_one(Error).report_sourced_error(e)
-            self.query_exactly_one('#main-cs').current = 'error'
-        else:
-            self.alarm("操作成功。")
-            self.set_timer(3, self.reset)
+            self.call_from_thread(self.query_exactly_one(Error).report_sourced_error, e)
+            self.call_from_thread(self.set_content, 'error')
+            return (False, None)
+        return (True, ret)
 
-    def ask_hook(self, hierarchy):
-        self.query_exactly_one('#main-cs').current = 'asset-match'
+    def ask_hook(self, name, hierarchy, ask_set):
+        self.call_from_thread(self.query_exactly_one(AssetMatcher).start_match, name, ask_set, hierarchy)
+        self.call_from_thread(self.set_content, 'asset-match')
+        # Well, we have to poll somewhere if we do not use multithreading or async.
+        # Yes, this is not reactive, but I'm worried about thread safety so
+        self.call_from_thread(self.lock)
+        while self.call_from_thread(self.is_locked):
+            sleep(2)
+            pass
+        return self.call_from_thread(self.get_match_result)

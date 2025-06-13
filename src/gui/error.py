@@ -1,18 +1,20 @@
 from textual.app import RenderResult
+from textual.binding import Binding
 from textual.reactive import reactive
+from textual.widget import Widget
 from textual.widgets import Static
 from textual.message import Message
 from rich.markup import escape
+from rich.text import Text
 
 from core import read_script
 from exception import SourcedException
 
-class Error(Static):
-    content = reactive('加载中')
+class Error(Widget):
     BINDINGS = [
-        ('R', 'retry', '重试'),
-        ('C', 'cancel', '取消')
-    ]   
+        Binding('r', 'retry', '重新编译'),
+        Binding('c', 'cancel', '取消')
+    ]
 
     class FailMessage(Message):
         pass
@@ -22,32 +24,37 @@ class Error(Static):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.can_focus = True
         self.script_dir = None
 
-    def render(self) -> RenderResult:
-        return self.content
+    def compose(self):
+        yield Static(id='error-msg')
     
     def action_retry(self):
         self.post_message(self.RetryMessage())
 
     def action_cancel(self):
         self.post_message(self.FailMessage())
+
+    def reset(self):
+        self.query_exactly_one('#error-msg').update('加载中')
     
     def report_sourced_error(self, error: SourcedException):
-        content = ':warning:[bold red]Error found during compiling:[/]\n'
         name, line = error.src.split(':')
+        line = int(line)
         sources = []
         for script_file in self.script_dir.iterdir():
             if script_file.stem == name:
-                sources = read_script(script_file).split('\n')
+                sources = read_script(script_file).splitlines()
+                name = f"{script_file}:{line}"
+        content = f"[bold red]Error found in {name} during compiling:[/]\n"
         if sources:
-            start = min(1, line - 2) - 1
-            end = max(len(sources), line + 2) - 1
+            start = max(1, line - 2) - 1
+            end = min(len(sources), line + 2) - 1
             for report_line in range(start, end + 1):
-                if report_line == line:
-                    content += f"  [red]>|{escape(report_line)}[/red]\n"
+                if report_line == line - 1:
+                    content += f"[gray]{report_line + 1:4}  >|[/][red]{escape(sources[report_line])}[/red]\n"
                 else:
-                    content += f"   |{escape(report_line)}\n"
-        content += error.__str__
-        self.content = content
-        
+                    content += f"[gray]{report_line + 1:4}   |[/]{escape(sources[report_line])}\n"
+        content += error.__str__()
+        self.query_exactly_one('#error-msg').update(content)

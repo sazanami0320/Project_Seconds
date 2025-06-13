@@ -161,7 +161,7 @@ class Unbabel:
                         elif suppress_level == 3:
                             continue
                         else:
-                            raise RuntimeError(f"Invalid supress level {suppress_level}")
+                            raise RuntimeError(f"Invalid suppress level {suppress_level}")
                     mapped_systems.append({
                         'type': system_type,
                         'src': system_item['src'],
@@ -194,9 +194,13 @@ class Unbabel:
 
     def __call__(self, *args, **kwds) -> bool:
         objs, = args
+        if 'suppress_level' in kwds:
+            suppress_level = kwds['suppress_level']
+            kwds.pop('suppress_level')
+        else:
+            suppress_level = 0
         hooks = DEFAULT_HOOKS.copy()
         hooks.update(kwds)
-        supress_level = kwds['supress_level'] if 'supress_level' in kwds else 0
         ump_sets = (set(), set(), set(), set())
         for obj in objs:
             for old, new in zip(ump_sets, self._pass(obj, dry_run=True)):
@@ -223,5 +227,5 @@ class Unbabel:
             if new_se_map:
                 self.se_map.update(new_se_map)
         self._save_maps()
-        return [self._pass(obj, dry_run=False, suppress_level=supress_level) for obj in objs]
+        return [self._pass(obj, dry_run=False, suppress_level=suppress_level) for obj in objs]
         
