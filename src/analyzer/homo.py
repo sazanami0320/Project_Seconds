@@ -1,5 +1,7 @@
 from .ast import ASTBuilder
 
+from exception import SourcedException
+
 class HomoSapiensScipt:
     ext = 'txt'
     def __init__(self, print_expression=False):
@@ -38,9 +40,9 @@ class HomoSapiensScipt:
             elif content == 'focus':
                 return '重置'
             else:
-                raise RuntimeError(f"以root身份执行rm -rf {content}, at {system_object['src']}")
+                raise SourcedException(system_object['src'], f"无法对{content}进行重置。")
         else:
-            raise RuntimeError(f"Cannot recognize system effect type {system_type}, at {system_object['src']}.")
+            raise SourcedException(system_object['src'], f"无法识别系统操作类型{system_type}。")
     
     def encode(self, script):
         raise NotImplementedError('Touching Fish')
@@ -61,6 +63,6 @@ class HomoSapiensScipt:
                 system_str_list = [self._format_system(system) for system in item['contents']]
                 formatted_list.append(f"（{', '.join(system_str_list)}）")
             else:
-                raise RuntimeError(f"Cannot parse object type {item['type']}, at {item['src']}.")
+                raise SourcedException(item['src'], f"无法识别AST节点类型{item['type']}。")
         return '\n'.join(formatted_list)
 

@@ -4,7 +4,16 @@ from utils import valid_word_count
 import json
 
 WORKSPACE = Path(__file__).resolve().parent.parent
+SCRIPT_DIR = WORKSPACE / 'script'
 MAPS_DIR = WORKSPACE / 'src' / 'maps'
+
+def read_script(target_file: Path):
+    try:
+        with target_file.open('r', encoding='utf-8') as f:
+            return f.read()
+    except UnicodeEncodeError as e:
+        with target_file.open('r', encoding='gb2312') as f:
+            return f.read()
 
 def analyze(target_file: Path, base_class):
     if base_class is TSSL:
@@ -13,18 +22,8 @@ def analyze(target_file: Path, base_class):
         instance = TSSL(tssl_config)
     else:
         instance = base_class()
-    
-    try:
-        with target_file.open('r', encoding='utf-8') as f:
-            obj = instance.encode(f.read(), filename=target_file.stem)
-    except UnicodeEncodeError as e:
-        with target_file.open('r', encoding='gb2312') as f:
-            obj = instance[base_class].encode(f.read())
-    except Exception as e:
-        if base_class is TSSL:
-            print(f"At line {instance.lineno} of file {target_file.stem}:")
-        raise e from None
-    return obj
+
+    return instance.encode(read_script(target_file), filename=target_file.stem)
 
 def output(instance, objs, titles, targe_file, *args, count=False, **kwargs):
     json_flag = isinstance(instance, ASTScript)

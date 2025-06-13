@@ -1,5 +1,5 @@
 from .ast import ASTBuilder
-from typing import Optional
+from exception import SourcedException
 
 class TSSL:
     '''Tadshi's Simple Script Lang'''
@@ -10,7 +10,7 @@ class TSSL:
         self.chara_id_counter = 0
 
     # Standard makes sure that jinbutsu_str has no spaces
-    def parse_jinbutsu(self, jinbutsu_str: str):
+    def parse_jinbutsu(self, src, jinbutsu_str: str):
         state = 0
         name = None # Actually this is ID
         alias = None
@@ -42,14 +42,14 @@ class TSSL:
                     state = 4
                     expression = ''
                 else:
-                    raise RuntimeError(f"Fail to parse Jinbutsu String {jinbutsu_str}.")
+                    raise SourcedException(src, f"无法识别人物{jinbutsu_str}.")
             elif state == 4: # Start parsing Hyojo
                 if c == ')':
                     state == 'CLOSED'
                 else:
                     expression += c
             else:
-                raise RuntimeError(f"WTH?")
+                raise SourcedException(src, f"无法识别人物{jinbutsu_str}.")
         if name is None:
             self.chara_id_counter += 1
             name = f"_{self.chara_id_counter}" # We do not map this
@@ -57,7 +57,7 @@ class TSSL:
             name = self.mapper[name]
         return name, alias, expression
     
-    def parse_system(self, sub_system_str: str):
+    def parse_system(self, src, sub_system_str: str):
         if '=>' in sub_system_str: # Legacy 
             equal_sign = '=>'
         elif '=' in sub_system_str:
@@ -75,9 +75,9 @@ class TSSL:
             right = sub_system_str
 
         if left == 'tachie':
-            character, alias, expression = self.parse_jinbutsu(right)
+            character, alias, expression = self.parse_jinbutsu(src, right)
             if alias is not None:
-                raise RuntimeError("Cannot use alias in tachie command!")
+                raise SourcedException(src, f"不能在tachie指令中使用alias！")
             assert expression is not None, sub_system_str
             right = (character, expression)
         elif right in self.mapper:
@@ -85,9 +85,9 @@ class TSSL:
         return left, right
         
     
-    def parse_systems(self, system_str: str):
+    def parse_systems(self, src, system_str: str):
         assert(system_str.startswith('[') and system_str.endswith(']')), system_str
-        return [self.parse_system(sub_system_str.strip()) for sub_system_str in system_str[1:-1].split(',')] 
+        return [self.parse_system(src, sub_system_str.strip()) for sub_system_str in system_str[1:-1].split(',')] 
 
     def encode(self, script: str, filename: str):
         lines = script.splitlines()
@@ -103,19 +103,19 @@ class TSSL:
                     builder.comment(src, line[2:].strip())
             elif line.startswith('['):
                 assert line.endswith(']') # Butai Shikake
-                lefts, rights = zip(*self.parse_systems(line))
+                lefts, rights = zip(*self.parse_systems(src, line))
                 builder.systems(src, lefts, rights)
             else:
                 spilt_point = line.index(' ')
                 jinbutsu = line[:spilt_point]
-                chara, alias, expression = self.parse_jinbutsu(jinbutsu)
+                chara, alias, expression = self.parse_jinbutsu(src, jinbutsu)
 
                 serifu = line[spilt_point + 1:]
                 systems = None
                 if serifu.endswith(']'):
                     spilt_point = serifu.index('[')
                     system_str = serifu[spilt_point:]
-                    systems = self.parse_systems(system_str)
+                    systems = self.parse_systems(src, system_str)
                     serifu = serifu[:spilt_point]
                 builder.line(src, chara, serifu, alias, expression, systems)
         return builder.finish()

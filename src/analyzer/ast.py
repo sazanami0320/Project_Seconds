@@ -2,6 +2,8 @@
 from typing import List, Dict, Optional, Any
 import json
 
+from exception import SourcedException
+
 class ASTBuilder:
     ''' For obvious reasons, the genkou/scenario of our game should be imperative;
         And for the same reasons, the script should also be imperative.
@@ -74,7 +76,7 @@ class ASTBuilder:
                     if work in self.characters:
                         self.characters.pop(work)
                     else:
-                        raise RuntimeError(f"At {src} script tries to hide {work}'s tachie, who is not even on stage!")
+                        raise SourcedException(src, f"Trying to hide {work}'s tachie, who is not even on stage!")
             target.append({
                 'type': responsible,
                 'src': src,

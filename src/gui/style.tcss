@@ -1,0 +1,23 @@
+Alarm {
+    background: blue;
+    border: solid white;
+    margin: 0 8;
+    max-width: 96;
+    min-height: 6;
+    text-align: center;
+}
+
+Error {
+    border: solid red;
+    margin: 0 8;
+    min-height: 6;
+}
+
+#main-cs {
+    align: center middle;
+}
+
+.confirm-btn {
+    color: green
+}
+

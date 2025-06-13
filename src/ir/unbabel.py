@@ -3,11 +3,19 @@
 from typing import Optional
 from pathlib import Path
 import json
-from ask import ask_bg, ask_cg, ask_fg, ask_se
+from .propmt_ask import ask_bg, ask_cg, ask_fg, ask_se
+from exception import SourcedException
+
+DEFAULT_HOOKS = {
+    'ask_bg': ask_bg,
+    'ask_cg': ask_cg,
+    'ask_fg': ask_fg,
+    'ask_se': ask_se
+}
 
 class Unbabel:
     
-    def __init__(self, map_path: Path, index: dict, script_path: Path):
+    def __init__(self, map_path: Path, index: dict):
         self.result = None
         self.map_path = map_path
         with map_path.open('r', encoding='utf-8') as f:
@@ -18,7 +26,6 @@ class Unbabel:
         self.fg_map = config['fg2id']
         self.se_map = config['se2id']
         self.asset_index = index
-        self.script_pass = script_path
         self._expand_index()
     
     def _expand_index(self):
@@ -140,7 +147,7 @@ class Unbabel:
                         continue
                     if content is None:
                         if suppress_level == 0:
-                            raise RuntimeError(f"Fail to map {system_item['content']} of {system_type} at {system_item['src']}.")
+                            raise SourcedException(system_item['src'], f"无法映射{system_type}类型的{system_item['content']}。")
                         elif suppress_level == 1:
                             if system_type == 'tachie':
                                 content = { 'id': self._map_chara(system_item['content']['id']), 'exp': f"<{system_item['content']['exp']}>" }
@@ -167,6 +174,7 @@ class Unbabel:
                         'content': mapped_systems
                     })
             else:
+                # This is a system-level fault.
                 raise RuntimeError(f"Cannot recognize item of type {item['type']}.")
         if dry_run:
             return unmapped_background, unmapped_cg, unmapped_expression, unmapped_sound
@@ -185,7 +193,9 @@ class Unbabel:
 
 
     def __call__(self, *args, **kwds) -> bool:
-        objs, sources = args
+        objs, = args
+        hooks = DEFAULT_HOOKS.copy()
+        hooks.update(kwds)
         supress_level = kwds['supress_level'] if 'supress_level' in kwds else 0
         ump_sets = (set(), set(), set(), set())
         for obj in objs:
@@ -193,15 +203,15 @@ class Unbabel:
                 old.update(new)
         ump_bg, ump_cg, ump_fg, ump_se = ump_sets
         if ump_bg:
-            new_bg_map = ask_bg(ump_bg)
+            new_bg_map = hooks['ask_bg'](ump_bg)
             if new_bg_map:
                 self.bg_map.update(new_bg_map)
         if ump_cg:
-            new_cg_map = ask_cg(ump_cg)
+            new_cg_map = hooks['ask_cg'](ump_cg)
             if new_cg_map:
                 self.cg_map.update(new_cg_map)
         if ump_fg:
-            new_fg_map = ask_fg(ump_fg)
+            new_fg_map = hooks['ask_fg'](ump_fg)
             if new_fg_map:
                 for new_key, new_value in new_fg_map.items():
                     if new_key in self.fg_map:
@@ -209,7 +219,7 @@ class Unbabel:
                     else:
                         self.fg_map[new_key] = new_value
         if ump_se:
-            new_se_map = ask_se(ump_se)
+            new_se_map = hooks['ask_se'](ump_se)
             if new_se_map:
                 self.se_map.update(new_se_map)
         self._save_maps()
