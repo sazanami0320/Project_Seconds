@@ -17,7 +17,9 @@ class ASTBuilder:
 
     def __init__(self):
         self.content = []
+        self.stacked_bg = None
         self.bg = 'black'
+        self.cg_mode = False
         self.characters = {}
 
     def comment(self, src: str, comment: str):
@@ -67,8 +69,20 @@ class ASTBuilder:
                     'id': chara,
                     'exp': expression
                 }
-            elif responsible == 'background' or responsible == 'cg':
+            elif responsible == 'background':
                 self.bg = work
+                self.cg_mode = False
+            elif responsible == 'cg':
+                # A CG cannot contains any tachie.
+                # However, you can still give them expressions... via tachie.
+                # So we do not clear characters here.
+                # Yes, I know tachie is not a good name now, finally.
+                # Maybe you can consider this like CG is always shown in the top layer
+                # and all tachie are covered by CG.
+                if self.cg_mode: # Satsubun case
+                    self.stacked_bg = self.bg
+                self.bg = work
+                self.cg_mode = True
             elif responsible == 'hide':
                 if work == '全部': 
                     self.characters.clear()
@@ -77,6 +91,11 @@ class ASTBuilder:
                         self.characters.pop(work)
                     else:
                         raise SourcedException(src, f"Trying to hide {work}'s tachie, who is not even on stage!")
+            elif responsible == 'reset':
+                if work == 'cg':
+                    if not self.cg_mode:
+                        raise SourcedException(src, 'Cannot exit CG while no CG is shown!')
+                    self.cg_mode = False
             target.append({
                 'type': responsible,
                 'src': src,

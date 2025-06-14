@@ -1,14 +1,17 @@
 from analyzer import HomoSapiensScipt, TSSL, ASTScript
 from ir import Unbabel
+from kag import KAGMaker
 from sys import argv
 from index import get_index
-from core import WORKSPACE, SCRIPT_DIR, MAPS_DIR, analyze, output_tokens
+import json
+from core import WORKSPACE, SCRIPT_DIR, MAPS_DIR, OUTPUT_DIR, analyze, output_tokens
 
 if __name__ == '__main__':
-    if len(argv) != 2:
-        print(f"Usage: {argv[0]} <target_folder>")
+    if len(argv) != 2 and len(argv) != 3:
+        print(f"Usage: {argv[0]} <target_folder> [supress_level]")
         exit(1)
     proj_name = argv[1]
+    supress_level = int(argv[2]) if len(argv) > 1 else 0
     target_folder = SCRIPT_DIR / proj_name
     if not target_folder.exists():
         raise FileNotFoundError(f"Cannot find script {argv[1]}.")
@@ -19,16 +22,20 @@ if __name__ == '__main__':
         if target_file.suffix == '.txt' or target_file.suffix == '.vbs':
             sources.append(target_file)
             objs.append(analyze(argv[1], target_file, TSSL))
-    output_folder = WORKSPACE / 'output' / argv[1]
+    output_folder = OUTPUT_DIR / argv[1]
     if not output_folder.exists():
         output_folder.mkdir(parents=True)
 # Raw script => AST
     titles = list(map(lambda path: path.stem, sources))
-    output_tokens(HomoSapiensScipt(), objs, titles, output_folder / f"{argv[1]}.txt", count=True)
-    output_tokens(HomoSapiensScipt(print_expression=True), objs, titles, output_folder / f"{argv[1]}_with_expressions.txt")
-    output_tokens(ASTScript(), objs, titles, output_folder / f"{argv[1]}_ast.json")
+    output_tokens(HomoSapiensScipt(), objs, titles, output_folder / f"{proj_name}.txt", count=True)
+    output_tokens(HomoSapiensScipt(print_expression=True), objs, titles, output_folder / f"{proj_name}_with_expressions.txt")
+    output_tokens(ASTScript(), objs, titles, output_folder / f"{proj_name}_ast.json")
 # AST => IR
     index = get_index(WORKSPACE / 'assets')
-    ir_compiler = Unbabel(proj_name, MAPS_DIR / 'ir.json', index)
-    objs = ir_compiler(objs, suppress_level=0)
-    
+    ir_compiler = Unbabel(MAPS_DIR / proj_name / 'ir.json', index)
+    irs = ir_compiler(objs, suppress_level=supress_level)
+    with open(output_folder / f"{proj_name}_ir.json", 'w', encoding='utf-8') as f:
+        json.dump(irs, f, ensure_ascii=False)
+# IR => Instr
+    instr_compiler = KAGMaker()
+    instr_compiler(proj_name, irs, titles) # Auto outputs

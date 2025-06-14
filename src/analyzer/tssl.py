@@ -7,10 +7,9 @@ class TSSL:
     def __init__(self, mapper):
         super().__init__()
         self.mapper = mapper
-        self.chara_id_counter = 0
 
     # Standard makes sure that jinbutsu_str has no spaces
-    def parse_jinbutsu(self, src, jinbutsu_str: str):
+    def parse_jinbutsu(self, src: str, jinbutsu_str: str):
         state = 0
         name = None # Actually this is ID
         alias = None
@@ -51,8 +50,7 @@ class TSSL:
             else:
                 raise SourcedException(src, f"无法识别人物{jinbutsu_str}.")
         if name is None:
-            self.chara_id_counter += 1
-            name = f"_{self.chara_id_counter}" # We do not map this
+            name = f"${alias}" # We do not map this
         elif name in self.mapper:
             name = self.mapper[name]
         return name, alias, expression

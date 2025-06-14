@@ -38,7 +38,9 @@ class HomoSapiensScipt:
             elif content == 'sound':
                 return '重置音效'
             elif content == 'focus':
-                return '重置'
+                return '重置镜头'
+            elif content == 'cg':
+                return '重置CG'
             else:
                 raise SourcedException(system_object['src'], f"无法对{content}进行重置。")
         else:
