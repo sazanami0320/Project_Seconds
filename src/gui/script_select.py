@@ -41,11 +41,11 @@ class ScriptSelect(Static):
     def compose(self) -> ComposeResult:
         yield Label("请选择一个剧本：")
         yield OptionList(*self.options, id='script-option-list')
-        yield Label("是否忽略映射缺失：")
+        yield Label("资产映射中“忽略”操作的实际执行内容：")
         with RadioSet(id='suppress-radio-set'):
-            for supress_level, text in enumerate(('不忽略', '忽略但标记', '忽略', '删除无法映射的指令')):
+            for supress_level, text in enumerate(('暂时跳过缺失但不忽略', '忽略缺失但在输出中标记', '忽略缺失', '删除缺失的指令')):
                 yield RadioButton(text, supress_level == 0)
-        yield Button(label="下一步", classes='btn-confirm', action='go_on')
+        yield Button(label="下一步", classes='btn-confirm', variant='primary', action='go_on')
         
     def on_mount(self):
         self.disabled = False

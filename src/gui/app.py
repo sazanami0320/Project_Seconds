@@ -1,7 +1,7 @@
 from textual import on, work
 from textual.app import App, ComposeResult
 from textual.containers import VerticalScroll
-from textual.widgets import Header, Footer, ContentSwitcher, Static
+from textual.widgets import Header, Footer, ContentSwitcher
 from typing import Tuple, Any
 from pathlib import Path
 from time import sleep
@@ -92,6 +92,9 @@ class MakeApp(App):
         if not status:
             return
         status, irs = self.wrapped_call(to_ir, self.script_dir.stem, objs, self.suppress_level, self.ask_hook)
+        # GUI is only used for asset mapping.
+        # You can use CLI to generate KAG scripts.
+        # (If you want it then you have to PR it)
     
     # The functions below all runs in a different thread and should be taken care of as the result.
     def wrapped_call(self, func, *args, **kwargs) -> Tuple[bool, Any]:
@@ -111,6 +114,5 @@ class MakeApp(App):
         # Yes, this is not reactive, but I'm worried about thread safety so
         self.call_from_thread(self.lock)
         while self.call_from_thread(self.is_locked):
-            sleep(2)
-            pass
+            sleep(1)
         return self.call_from_thread(self.get_match_result)
