@@ -6,6 +6,7 @@ import json
 WORKSPACE = Path(__file__).resolve().parent.parent
 SCRIPT_DIR = WORKSPACE / 'script'
 MAPS_DIR = WORKSPACE / 'src' / 'maps'
+OUTPUT_DIR = WORKSPACE / 'output'
 
 def read_script(target_file: Path):
     try:
@@ -15,9 +16,9 @@ def read_script(target_file: Path):
         with target_file.open('r', encoding='gb2312') as f:
             return f.read()
 
-def analyze(target_file: Path, base_class):
+def analyze(proj_name: str, target_file: Path, base_class):
     if base_class is TSSL:
-        with open(MAPS_DIR / 'tssl.json', 'r', encoding='utf-8') as f:
+        with open(MAPS_DIR / proj_name / 'tssl.json', 'r', encoding='utf-8') as f:
             tssl_config = json.load(f)
         instance = TSSL(tssl_config)
     else:
@@ -25,7 +26,7 @@ def analyze(target_file: Path, base_class):
 
     return instance.encode(read_script(target_file), filename=target_file.stem)
 
-def output(instance, objs, titles, targe_file, *args, count=False, **kwargs):
+def output_tokens(instance, objs, titles, targe_file, *args, count=False, **kwargs):
     json_flag = isinstance(instance, ASTScript)
     with targe_file.open('w', encoding='utf-8') as f:
         if json_flag:

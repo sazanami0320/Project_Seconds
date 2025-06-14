@@ -16,7 +16,10 @@ def build_tree(tree_node: tree.TreeNode, tree_dict: dict, depth: int=1, history:
             new_node = tree_node.add(key)
             build_tree(new_node, value, depth + 1, next_history)
         elif isinstance(value, list):
-            tree_node.add_leaf(f"{key}    {value[0].name}等(+{len(value) - 1})", '_'.join(next_history))
+            suffix = ''
+            if len(value) > 0:
+                suffix = f"(+{len(value) - 1})"
+            tree_node.add_leaf(f"{key}    {value[0].name}{suffix})", '_'.join(next_history))
         else:
             tree_node.add_leaf(f"{key}    {value.name}", '_'.join(next_history))
 

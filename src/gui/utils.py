@@ -1,29 +1,29 @@
 from analyzer import HomoSapiensScipt, TSSL, ASTScript
-from core import WORKSPACE, MAPS_DIR, analyze, output
+from core import WORKSPACE, MAPS_DIR, analyze, output_tokens
 from index import get_index
 from ir import Unbabel
 from pathlib import Path
 from functools import partial
 
 def to_ast(target_folder: Path):
-    source_name = target_folder.stem
+    proj_name = target_folder.stem
     objs = []
     sources = []
     for target_file in target_folder.iterdir():
         if target_file.suffix == '.txt' or target_file.suffix == '.vbs':
             sources.append(target_file)
-            objs.append(analyze(target_file, TSSL))
-    output_folder = WORKSPACE / 'output' / source_name
+            objs.append(analyze(proj_name, target_file, TSSL))
+    output_folder = WORKSPACE / 'output' / proj_name
     if not output_folder.exists():
         output_folder.mkdir(parents=True)
     titles = list(map(lambda path: path.stem, sources))
-    output(HomoSapiensScipt(), objs, titles, output_folder / f"{source_name}.txt", count=True)
-    output(ASTScript(), objs, titles, output_folder / f"{source_name}_ast.json")
+    output_tokens(HomoSapiensScipt(), objs, titles, output_folder / f"{proj_name}.txt", count=True)
+    output_tokens(ASTScript(), objs, titles, output_folder / f"{proj_name}_ast.json")
     return objs
 
-def to_ir(objs, suppress_level: int, ask_hook):
+def to_ir(proj_name: str, objs: list, suppress_level: int, ask_hook):
     asset_index = get_index(WORKSPACE / 'assets')
-    ir_compiler = Unbabel(MAPS_DIR / 'ir.json', asset_index)
+    ir_compiler = Unbabel(MAPS_DIR / proj_name / 'ir.json', asset_index)
     hooks = {
         'ask_bg': partial(ask_hook, '背景', {'背景': asset_index['bg'], 'CG': asset_index['cg']}),
         'ask_cg': partial(ask_hook, 'CG', {'CG': asset_index['cg'], '背景': asset_index['bg']}),

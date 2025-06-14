@@ -91,7 +91,7 @@ class MakeApp(App):
         # Any fail would end this worker.
         if not status:
             return
-        status, irs = self.wrapped_call(to_ir, objs, self.suppress_level, self.ask_hook)
+        status, irs = self.wrapped_call(to_ir, self.script_dir.stem, objs, self.suppress_level, self.ask_hook)
     
     # The functions below all runs in a different thread and should be taken care of as the result.
     def wrapped_call(self, func, *args, **kwargs) -> Tuple[bool, Any]:
