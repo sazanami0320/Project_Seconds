@@ -56,7 +56,7 @@ class KAGMaker:
                     '  "face" => "",\n',
                     '  "color" => "0x000000",\n'
                     f"  \"tag\" => \"{chara_tag}\"\n"
-                    ']'
+                    ' ]'
                 ])
                 if index < len(self.chara_list) - 1:
                     f.write(',') # In case nvlmaker does not recognize trailing comma

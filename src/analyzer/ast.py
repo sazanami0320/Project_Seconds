@@ -96,6 +96,8 @@ class ASTBuilder:
                     if not self.cg_mode:
                         raise SourcedException(src, 'Cannot exit CG while no CG is shown!')
                     self.cg_mode = False
+            elif responsible == 'transform':
+                self.characters.clear() # If we transform, then clear tachie?
             target.append({
                 'type': responsible,
                 'src': src,

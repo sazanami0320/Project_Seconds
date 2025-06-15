@@ -11,7 +11,7 @@ if __name__ == '__main__':
         print(f"Usage: {argv[0]} <target_folder> [supress_level]")
         exit(1)
     proj_name = argv[1]
-    supress_level = int(argv[2]) if len(argv) > 1 else 0
+    supress_level = int(argv[2]) if len(argv) > 2 else 0
     target_folder = SCRIPT_DIR / proj_name
     if not target_folder.exists():
         raise FileNotFoundError(f"Cannot find script {argv[1]}.")
