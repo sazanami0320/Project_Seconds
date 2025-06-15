@@ -4,7 +4,7 @@ from textual.containers import Horizontal
 from textual.message import Message
 from textual.widget import Widget
 from textual.widgets import Button, Label, Tree, tree
-from typing import Optional, List
+from typing import List
 
 def build_tree(tree_node: tree.TreeNode, tree_dict: dict, depth: int=1, history: List[str]=[]):
     for key, value in tree_dict.items():
@@ -19,7 +19,7 @@ def build_tree(tree_node: tree.TreeNode, tree_dict: dict, depth: int=1, history:
             suffix = ''
             if len(value) > 0:
                 suffix = f"(+{len(value) - 1})"
-            tree_node.add_leaf(f"{key}    {value[0].name}{suffix})", '_'.join(next_history))
+            tree_node.add_leaf(f"{key}    {value[0].name}{suffix}", '_'.join(next_history))
         else:
             tree_node.add_leaf(f"{key}    {value.name}", '_'.join(next_history))
 
@@ -45,7 +45,8 @@ class AssetMatcher(Widget):
         self.disabled = True
     
     def start_match(self, name: str, match_set: set, hierarchy: dict):
-        self.match_set = match_set
+        self.match_set = list(match_set)
+        self.match_set.sort()
         self.match_result = {}
         self.hierarchy = hierarchy
         tree = self.query_exactly_one('#asset-match-tree')
@@ -53,13 +54,14 @@ class AssetMatcher(Widget):
         build_tree(tree.root, hierarchy)
         tree.root.expand()
         self.next_match()
+        self.focus()
         self.disabled = False
 
     def next_match(self):
         if self.match_set:
-            self.current_match = self.match_set.pop()
+            self.current_match = self.match_set.pop(0)
             self.log(self.current_match)
-            self.query_exactly_one('#asset-match-label').update(f"请为{self.current_match}选取对应资源")
+            self.query_exactly_one('#asset-match-label').update(f"请为[bold italic]{self.current_match}[/]选取对应资源")
         else:
             self.disabled = True
             self.post_message(self.MatchFinish(self.match_result))
@@ -68,8 +70,8 @@ class AssetMatcher(Widget):
         yield Label('', id='asset-match-label', classes='primary')
         yield Tree('asset_tree', id='asset-match-tree')
         with Horizontal():
-            yield Button('忽略', id='asset-match-btn-ignore', classes='cancel-btn', action="self.ignore_asset")
-            yield Button('确认', id='asset-match-btn-confirm', classes='confirm-btn', variant='success', action="self.match_asset")
+            yield Button('忽略', id='asset-match-btn-ignore', classes='cancel-btn', action="ignore_asset")
+            yield Button('确认', id='asset-match-btn-confirm', classes='confirm-btn', variant='success', action="match_asset")
 
     def on_tree_node_highlighted(self, msg: Tree.NodeHighlighted):
         self.selection = msg.node.data

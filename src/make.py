@@ -14,7 +14,7 @@ if __name__ == '__main__':
     supress_level = int(argv[2]) if len(argv) > 2 else 0
     target_folder = SCENARIO_DIR / proj_name
     if not target_folder.exists():
-        raise FileNotFoundError(f"Cannot find scenario {argv[1]}.")
+        raise FileNotFoundError(f"Cannot find scenario {proj_name}.")
 # Tokenize and analyze. Note that there are legacy parameters which are no longer used.
     objs = []
     sources = []
@@ -22,7 +22,7 @@ if __name__ == '__main__':
         if target_file.suffix == '.txt' or target_file.suffix == '.vbs':
             sources.append(target_file)
             objs.append(analyze(argv[1], target_file, TSSL))
-    output_folder = OUTPUT_DIR / argv[1]
+    output_folder = OUTPUT_DIR / proj_name
     if not output_folder.exists():
         output_folder.mkdir(parents=True)
 # Raw scenario => AST

@@ -64,11 +64,11 @@ class Unbabel:
         if raw_cg in self.cg_set:
             return raw_cg
         elif raw_cg in self.cg_map:
-            return self.bg_map[raw_cg]
+            return self.cg_map[raw_cg]
         elif try_bg and raw_cg in self.bg_set:
             return raw_cg
         elif try_bg and raw_cg in self.bg_map:
-            return self.cg_map[raw_cg]
+            return self.bg_map[raw_cg]
         else:
             return None
                 

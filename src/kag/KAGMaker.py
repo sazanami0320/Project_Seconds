@@ -1,4 +1,4 @@
-from core import output_tokens, OUTPUT_DIR
+from core import OUTPUT_DIR
 from pathlib import Path
 
 class KAGMaker:
@@ -47,7 +47,7 @@ class KAGMaker:
             with output_path.open('w', encoding='utf-8') as f:
                 f.writelines(self.kag_lines)
         # Try to generate a namelist for futher edit. Is this really necessary?
-        with open(OUTPUT_DIR / 'namelist.tjs', 'w', encoding='utf-8') as f:
+        with open(OUTPUT_DIR / proj_name / 'namelist.tjs', 'w', encoding='utf-8') as f:
             f.write('(const) [\n')
             for index, chara_tag in enumerate(self.chara_list):
                 f.writelines([

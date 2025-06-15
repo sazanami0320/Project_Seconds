@@ -17,6 +17,10 @@ Error {
 AssetMatcher {
     min-height: 8;
     height: auto;
+    Tree {
+        height: auto;
+        max-height: 12;
+    }
 }
 
 #error-msg {
