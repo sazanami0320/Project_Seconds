@@ -9,6 +9,7 @@ class KAGMaker:
         self.chara_list = []
         # A dynamically-updated map from chara id to their current (storage, pos, layer).
         self.tachie_map = {}
+        self.current_speaker = None
         self.cg_mode = False # Whether we are showing a CG.
     
     def __call__(self, *args, **kwds):
@@ -39,7 +40,9 @@ class KAGMaker:
                             # TODO: Maybe add facial expression in the future?
                             # chara_command += f" face=\"{self.tachie_map[chara_id][0]}\""
                             pass
-                        self.writeln(chara_command)
+                        if chara_command != self.current_speaker:
+                            self.writeln(chara_command)
+                            self.current_speaker = chara_command
                     self.writeln(f"{' ' * line_indent}{item['line']} [w]") # default w
                 elif item['type'] == 'systems':
                     for system_item in item['content']:
