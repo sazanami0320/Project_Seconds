@@ -1,3 +1,3 @@
 from .tssl import TSSL
-from .homo import HomoSapiensScipt
+from .homo import HomoSapiensText
 from .ast import ASTScript

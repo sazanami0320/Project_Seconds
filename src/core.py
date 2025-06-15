@@ -4,11 +4,11 @@ from utils import valid_word_count
 import json
 
 WORKSPACE = Path(__file__).resolve().parent.parent
-SCRIPT_DIR = WORKSPACE / 'script'
+SCENARIO_DIR = WORKSPACE / 'scenario'
 MAPS_DIR = WORKSPACE / 'src' / 'maps'
 OUTPUT_DIR = WORKSPACE / 'output'
 
-def read_script(target_file: Path):
+def read_scenario(target_file: Path):
     try:
         with target_file.open('r', encoding='utf-8') as f:
             return f.read()
@@ -24,7 +24,7 @@ def analyze(proj_name: str, target_file: Path, base_class):
     else:
         instance = base_class()
 
-    return instance.encode(read_script(target_file), filename=target_file.stem)
+    return instance.encode(read_scenario(target_file), filename=target_file.stem)
 
 def output_tokens(instance, objs, titles, targe_file, *args, count=False, **kwargs):
     json_flag = isinstance(instance, ASTScript)

@@ -1,4 +1,4 @@
-from analyzer import HomoSapiensScipt, TSSL, ASTScript
+from analyzer import HomoSapiensText, TSSL, ASTScript
 from core import WORKSPACE, MAPS_DIR, analyze, output_tokens
 from index import get_index
 from ir import Unbabel
@@ -17,7 +17,7 @@ def to_ast(target_folder: Path):
     if not output_folder.exists():
         output_folder.mkdir(parents=True)
     titles = list(map(lambda path: path.stem, sources))
-    output_tokens(HomoSapiensScipt(), objs, titles, output_folder / f"{proj_name}.txt", count=True)
+    output_tokens(HomoSapiensText(), objs, titles, output_folder / f"{proj_name}.txt", count=True)
     output_tokens(ASTScript(), objs, titles, output_folder / f"{proj_name}_ast.json")
     return objs
 

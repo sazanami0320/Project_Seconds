@@ -1,4 +1,4 @@
-# Project Second (Scripts)
+# Project Second (Scenario)
 ## 仓库说明
 本仓库（至少计划上）为存放剧本源代码以及剧本转换为（部分）可执行KAG代码的工程的仓库。
 ## 仓库特性以及完成情况

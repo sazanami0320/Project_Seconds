@@ -1,10 +1,10 @@
-from analyzer import HomoSapiensScipt, TSSL, ASTScript
+from analyzer import HomoSapiensText, TSSL, ASTScript
 from ir import Unbabel
 from kag import KAGMaker
 from sys import argv
 from index import get_index
 import json
-from core import WORKSPACE, SCRIPT_DIR, MAPS_DIR, OUTPUT_DIR, analyze, output_tokens
+from core import WORKSPACE, SCENARIO_DIR, MAPS_DIR, OUTPUT_DIR, analyze, output_tokens
 
 if __name__ == '__main__':
     if len(argv) != 2 and len(argv) != 3:
@@ -12,9 +12,9 @@ if __name__ == '__main__':
         exit(1)
     proj_name = argv[1]
     supress_level = int(argv[2]) if len(argv) > 2 else 0
-    target_folder = SCRIPT_DIR / proj_name
+    target_folder = SCENARIO_DIR / proj_name
     if not target_folder.exists():
-        raise FileNotFoundError(f"Cannot find script {argv[1]}.")
+        raise FileNotFoundError(f"Cannot find scenario {argv[1]}.")
 # Tokenize and analyze. Note that there are legacy parameters which are no longer used.
     objs = []
     sources = []
@@ -25,10 +25,10 @@ if __name__ == '__main__':
     output_folder = OUTPUT_DIR / argv[1]
     if not output_folder.exists():
         output_folder.mkdir(parents=True)
-# Raw script => AST
+# Raw scenario => AST
     titles = list(map(lambda path: path.stem, sources))
-    output_tokens(HomoSapiensScipt(), objs, titles, output_folder / f"{proj_name}.txt", count=True)
-    output_tokens(HomoSapiensScipt(print_expression=True), objs, titles, output_folder / f"{proj_name}_with_expressions.txt")
+    output_tokens(HomoSapiensText(), objs, titles, output_folder / f"{proj_name}.txt", count=True)
+    output_tokens(HomoSapiensText(print_expression=True), objs, titles, output_folder / f"{proj_name}_with_expressions.txt")
     output_tokens(ASTScript(), objs, titles, output_folder / f"{proj_name}_ast.json")
 # AST => IR
     index = get_index(WORKSPACE / 'assets')

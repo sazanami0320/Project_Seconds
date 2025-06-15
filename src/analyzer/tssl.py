@@ -2,7 +2,7 @@ from .ast import ASTBuilder
 from exception import SourcedException
 
 class TSSL:
-    '''Tadshi's Simple Script Lang'''
+    '''Tadshi's Simple Scenario Lang'''
     ext = 'vbs'
     def __init__(self, mapper):
         super().__init__()
@@ -87,8 +87,8 @@ class TSSL:
         assert(system_str.startswith('[') and system_str.endswith(']')), system_str
         return [self.parse_system(src, sub_system_str.strip()) for sub_system_str in system_str[1:-1].split(',')] 
 
-    def encode(self, script: str, filename: str):
-        lines = script.splitlines()
+    def encode(self, scenario: str, filename: str):
+        lines = scenario.splitlines()
         builder = ASTBuilder()
         for lineno, line in enumerate(lines):
             self.lineno = lineno + 1

@@ -1,4 +1,4 @@
-'''The Babel Trench to merge the gap between scripts and codes.
+'''The Babel Trench to merge the gap between scripts and scenario.
     It turns out that a good amateur VN writer should be a good coder. What a joke.'''
 from typing import Optional
 from pathlib import Path

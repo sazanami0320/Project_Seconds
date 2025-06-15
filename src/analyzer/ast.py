@@ -6,8 +6,8 @@ from exception import SourcedException
 
 class ASTBuilder:
     ''' For obvious reasons, the genkou/scenario of our game should be imperative;
-        And for the same reasons, the script should also be imperative.
-        However, there are inevitably some redundant or inferrable infomation in the script, 
+        And for the same reasons, the scenario should also be imperative.
+        However, there are inevitably some redundant or inferrable infomation in the scenario, 
         which can be a Odysssey for the playwrights if they have to write it through every line.
         Also, composers and voice actors(actually AI though) need to access the state of stage frequently.
         As the result, I decided to write a IR which traverse through every single line and record their states.

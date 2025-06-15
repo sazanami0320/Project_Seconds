@@ -7,7 +7,7 @@ from textual.message import Message
 from rich.markup import escape
 from rich.text import Text
 
-from core import read_script
+from core import read_scenario
 from exception import SourcedException
 
 class Error(Widget):
@@ -25,7 +25,7 @@ class Error(Widget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.can_focus = True
-        self.script_dir = None
+        self.scenario_dir = None
 
     def compose(self):
         yield Static(id='error-msg')
@@ -43,10 +43,10 @@ class Error(Widget):
         name, line = error.src.split(':')
         line = int(line)
         sources = []
-        for script_file in self.script_dir.iterdir():
-            if script_file.stem == name:
-                sources = read_script(script_file).splitlines()
-                name = f"{script_file}:{line}"
+        for scenario_file in self.scenario_dir.iterdir():
+            if scenario_file.stem == name:
+                sources = read_scenario(scenario_file).splitlines()
+                name = f"{scenario_file}:{line}"
         content = f"[bold red]Error found in {name} during compiling:[/]\n"
         if sources:
             start = max(1, line - 2) - 1

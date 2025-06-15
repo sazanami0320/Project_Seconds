@@ -1,4 +1,4 @@
-;tadshi's simple script lang
+;tadshi's simple scenario lang
 ;Title: 简明扼要现代魔法
 [background=black]
 ;估计没人看的出来，但是这段灵感极有可能来自看星星

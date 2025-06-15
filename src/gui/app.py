@@ -7,7 +7,7 @@ from pathlib import Path
 from time import sleep
 
 from exception import SourcedException
-from .script_select import ScriptSelect
+from .scenario_select import ScenarioSelect
 from .asset_match import AssetMatcher
 from .alarm import Alarm
 from .error import Error
@@ -30,7 +30,7 @@ class MakeApp(App):
         yield Header()
         with VerticalScroll(can_focus=False):
             with ContentSwitcher(initial='src-select', id='main-cs'):
-                yield ScriptSelect(id='src-select')
+                yield ScenarioSelect(id='src-select')
                 yield AssetMatcher(id='asset-match')
                 yield Alarm(id='alarm')
                 yield Error(id='error')
@@ -59,9 +59,9 @@ class MakeApp(App):
     def get_match_result(self):
         return self.match_result
     
-    @on(ScriptSelect.ScriptSelected)
-    def on_src_selected(self, message: ScriptSelect.ScriptSelected):
-        self.script_dir = message.script_dir
+    @on(ScenarioSelect.ScenarioSelected)
+    def on_src_selected(self, message: ScenarioSelect.ScenarioSelected):
+        self.scenario_dir = message.scenario_dir
         self.suppress_level = message.suppress_level
         self.start_compile()
 
@@ -85,13 +85,13 @@ class MakeApp(App):
         # With workers in textual we now have a full thread for working.
         # It's way too hard to fix all my previous serial codes into async-aware ones
         # so threading might be the best solution.
-        self.call_from_thread(self.alarm, f"正在尝试编译{self.script_dir.stem}...")
-        self.query_exactly_one(Error).script_dir = self.script_dir # This is not reactive
-        status, objs = self.wrapped_call(to_ast, self.script_dir)
+        self.call_from_thread(self.alarm, f"正在尝试编译{self.scenario_dir.stem}...")
+        self.query_exactly_one(Error).scenario_dir = self.scenario_dir # This is not reactive
+        status, objs = self.wrapped_call(to_ast, self.scenario_dir)
         # Any fail would end this worker.
         if not status:
             return
-        status, irs = self.wrapped_call(to_ir, self.script_dir.stem, objs, self.suppress_level, self.ask_hook)
+        status, irs = self.wrapped_call(to_ir, self.scenario_dir.stem, objs, self.suppress_level, self.ask_hook)
         # GUI is only used for asset mapping.
         # You can use CLI to generate KAG scripts.
         # (If you want it then you have to PR it)

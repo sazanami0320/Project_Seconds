@@ -2,7 +2,7 @@ from .ast import ASTBuilder
 
 from exception import SourcedException
 
-class HomoSapiensScipt:
+class HomoSapiensText:
     ext = 'txt'
     def __init__(self, print_expression=False):
         super().__init__()
