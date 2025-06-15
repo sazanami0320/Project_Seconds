@@ -70,8 +70,14 @@ class AssetMatcher(Widget):
         yield Label('', id='asset-match-label', classes='primary')
         yield Tree('asset_tree', id='asset-match-tree')
         with Horizontal():
-            yield Button('忽略', id='asset-match-btn-ignore', classes='cancel-btn', action="ignore_asset")
-            yield Button('确认', id='asset-match-btn-confirm', classes='confirm-btn', variant='success', action="match_asset")
+            yield Button('忽略', id='asset-match-btn-ignore', classes='cancel-btn')
+            yield Button('确认', id='asset-match-btn-confirm', classes='confirm-btn', variant='success')
+
+    def on_button_pressed(self, msg: Button.Pressed):
+        if msg.button.id == 'asset-match-btn-ignore':
+            self.action_ignore_asset()
+        if msg.button.id == 'asset-match-btn-confirm':
+            self.action_match_asset()
 
     def on_tree_node_highlighted(self, msg: Tree.NodeHighlighted):
         self.selection = msg.node.data
