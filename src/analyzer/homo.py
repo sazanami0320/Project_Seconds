@@ -21,9 +21,9 @@ class HomoSapiensText:
             return f"{content}"
         elif system_type == 'tachie':
             if self.exp_flag:
-                return f"{content['id']}: {content['exp']}"
+                return f"{content['cid']}: {content['exp']}"
             else:
-                return f"{content['id']}"
+                return f"{content['cid']}"
         elif system_type == 'hide':
             return f"隐藏{content}立绘"
         elif system_type == 'move':
@@ -55,8 +55,8 @@ class HomoSapiensText:
             if item['type'] == 'comment':
                 formatted_list.append('//' + item['content'])
             elif item['type'] == 'line':
-                if item['id'] != '旁白':
-                    formatted_line = '[' + item['id'] + ']\t'
+                if item['cid'] != '旁白':
+                    formatted_line = '[' + item['cid'] + ']\t'
                 else:
                     formatted_line = ''
                 formatted_line += item['line']

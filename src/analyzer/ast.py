@@ -20,6 +20,7 @@ class ASTBuilder:
         self.stacked_bg = None
         self.bg = 'black'
         self.cg_mode = False
+        self.line_counter = 0
         self.characters = {}
 
     def comment(self, src: str, comment: str):
@@ -40,9 +41,11 @@ class ASTBuilder:
             'type': 'line',
             'bg': self.bg,
             'src': src,
-            'id': jinbutsu,
+            'id': self.line_counter,
+            'cid': jinbutsu,
             'line': serifu,
         }
+        self.line_counter += 1
         if self.characters:
             line['charas'] = self.characters.copy()
         if alias is not None:
@@ -66,7 +69,7 @@ class ASTBuilder:
                 chara, expression = work
                 self.characters[chara] = expression
                 work = {
-                    'id': chara,
+                    'cid': chara,
                     'exp': expression
                 }
             elif responsible == 'background':

@@ -108,7 +108,8 @@ class Unbabel:
                 mapped_item = {
                     'type': 'line',
                     'src': item['src'],
-                    'id': self._map_chara(item['id']),
+                    'id': item['id'],
+                    'cid': self._map_chara(item['cid']),
                     'line': item['line']
                 }
                 if 'alias' in item:
@@ -132,10 +133,10 @@ class Unbabel:
                         if content is None and dry_run:
                             unmapped_sound.add(system_item['content'])
                     elif system_type == 'tachie':
-                        id = self._map_chara(content['id'])
+                        id = self._map_chara(content['cid'])
                         exp = self._map_fg(id, content['exp'])
                         if exp is not None:
-                            content = { 'id': id, 'exp': exp }
+                            content = { 'cid': id, 'exp': exp }
                         else:
                             if dry_run:
                                 unmapped_expression.add((id, content['exp']))
@@ -150,12 +151,12 @@ class Unbabel:
                             raise SourcedException(system_item['src'], f"无法映射{system_type}类型的{system_item['content']}。")
                         elif suppress_level == 1:
                             if system_type == 'tachie':
-                                content = { 'id': self._map_chara(system_item['content']['id']), 'exp': f"<{system_item['content']['exp']}>" }
+                                content = { 'cid': self._map_chara(system_item['content']['cid']), 'exp': f"<{system_item['content']['exp']}>" }
                             else:
                                 content = f"<{system_item['content']}>"
                         elif suppress_level == 2:
                             if system_type == 'tachie':
-                                content = { 'id': self._map_chara(system_item['content']['id']), 'exp': system_item['content']['exp'] }
+                                content = { 'cid': self._map_chara(system_item['content']['cid']), 'exp': system_item['content']['exp'] }
                             else:
                                 content = system_item['content']
                         elif suppress_level == 3:

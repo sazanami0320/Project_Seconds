@@ -24,7 +24,7 @@ class KAGMaker:
                 if item['type'] == 'comment':
                     self.writeln(f";[剧本注]{item['content']}")
                 elif item['type'] == 'line':
-                    chara_id = item['id']
+                    chara_id = item['cid']
                     if chara_id.startswith('$'): # Take this as an NPC
                         self.writeln(f"@npc {item['alias']}")
                     else:
@@ -85,7 +85,7 @@ class KAGMaker:
         elif system_type == 'sound':
             self.writeln(f"@se storege={self.resource_name(content)}")
         elif system_type == 'tachie':
-            self.chara_show_up(content['id'], content['exp'])
+            self.chara_show_up(content['cid'], content['exp'])
         elif system_type == 'hide':
             if content == 'all':
                 self.writeln('@clfg')
