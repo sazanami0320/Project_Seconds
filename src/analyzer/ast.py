@@ -1,6 +1,7 @@
 
 from typing import List, Dict, Optional, Any
 import json
+import hashlib
 
 from exception import SourcedException
 
@@ -15,13 +16,28 @@ class ASTBuilder:
         eliminate extra passes.
         Short version: AST tracks stage change. It is even not an AST actually, so why not.'''
 
-    def __init__(self):
+    def __init__(self, hash_len:int = 8):
         self.content = []
         self.stacked_bg = None
         self.bg = 'black'
         self.cg_mode = False
-        self.line_counter = 0
         self.characters = {}
+        self.hash_len = hash_len
+        self.hash_counts = {}
+
+    # Is it really fine to not include cid in this?
+    def make_id(self, serifu: str):
+        hasher = hashlib.sha256(b"Project Seconds!")
+        hasher.update(serifu.encode('utf-8'))
+        hash_str = hasher.hexdigest()[:self.hash_len - 1]
+        if hash_str in self.hash_counts:
+            count = self.hash_counts[hash_str]
+            self.hash_counts[hash_str] = count + 1
+            hash_str += hex(count)[2:]
+        else:
+            self.hash_counts[hash_str] = 1
+            hash_str += '0'
+        return hash_str
 
     def comment(self, src: str, comment: str):
         self.content.append({
@@ -41,11 +57,10 @@ class ASTBuilder:
             'type': 'line',
             'bg': self.bg,
             'src': src,
-            'id': self.line_counter,
+            'id': self.make_id(serifu),
             'cid': jinbutsu,
             'line': serifu,
         }
-        self.line_counter += 1
         if self.characters:
             line['charas'] = self.characters.copy()
         if alias is not None:
