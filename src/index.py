@@ -93,7 +93,7 @@ def update_index(asset_dir: Path, art_dir_name: Optional[str]):
         pickle.dump(index, f)
     return index
 
-def get_index(asset_dir:Path, art_dir_name: Optional[str]='美术资源'):
+def get_index(asset_dir:Path, art_dir_name: Optional[str]='游戏资产'):
     update_flag = False
     index_file = asset_dir / 'index.pickle'
     if index_file.exists():

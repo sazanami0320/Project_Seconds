@@ -1,5 +1,5 @@
 from analyzer import HomoSapiensText, TSSL, ASTScript
-from core import WORKSPACE, MAPS_DIR, analyze, output_tokens
+from core import WORKSPACE, CONFIG_DIR, analyze, output_tokens
 from index import get_index
 from ir import Unbabel
 from pathlib import Path
@@ -23,7 +23,7 @@ def to_ast(target_folder: Path):
 
 def to_ir(proj_name: str, objs: list, suppress_level: int, ask_hook):
     asset_index = get_index(WORKSPACE / 'assets')
-    ir_compiler = Unbabel(MAPS_DIR / proj_name / 'ir.json', asset_index)
+    ir_compiler = Unbabel(CONFIG_DIR / proj_name / 'ir_map.json', asset_index)
     def expand_map_key_wrapper(func: callable):
         def expand_map_key(map: dict):
             result = {}

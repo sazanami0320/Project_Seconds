@@ -141,6 +141,8 @@ class Unbabel:
                             if dry_run:
                                 unmapped_expression.add((id, content['exp']))
                             content = None
+                    elif system_type == 'hide':
+                        content = self._map_chara(content)
                     else:
                         # We do not map other resources, at least for now.
                         pass

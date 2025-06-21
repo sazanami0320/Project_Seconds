@@ -4,7 +4,7 @@ from kag import KAGMaker
 from sys import argv
 from index import get_index
 import json
-from core import WORKSPACE, SCENARIO_DIR, MAPS_DIR, OUTPUT_DIR, analyze, output_tokens
+from core import WORKSPACE, SCENARIO_DIR, CONFIG_DIR, OUTPUT_DIR, analyze, output_tokens
 
 if __name__ == '__main__':
     if len(argv) != 2 and len(argv) != 3:
@@ -32,10 +32,10 @@ if __name__ == '__main__':
     output_tokens(ASTScript(), objs, titles, output_folder / f"{proj_name}_ast.json")
 # AST => IR
     index = get_index(WORKSPACE / 'assets')
-    ir_compiler = Unbabel(MAPS_DIR / proj_name / 'ir.json', index)
+    ir_compiler = Unbabel(CONFIG_DIR / proj_name / 'ir_map.json', index)
     irs = ir_compiler(objs, suppress_level=supress_level)
     with open(output_folder / f"{proj_name}_ir.json", 'w', encoding='utf-8') as f:
         json.dump(irs, f, ensure_ascii=False)
 # IR => Instr
-    instr_compiler = KAGMaker()
+    instr_compiler = KAGMaker(CONFIG_DIR / proj_name / 'kag_config.json', index)
     instr_compiler(proj_name, irs, titles) # Auto outputs

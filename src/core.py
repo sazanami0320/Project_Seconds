@@ -5,7 +5,7 @@ import json
 
 WORKSPACE = Path(__file__).resolve().parent.parent
 SCENARIO_DIR = WORKSPACE / 'scenario'
-MAPS_DIR = WORKSPACE / 'src' / 'maps'
+CONFIG_DIR = WORKSPACE / 'config'
 OUTPUT_DIR = WORKSPACE / 'output'
 
 def read_scenario(target_file: Path):
@@ -18,7 +18,7 @@ def read_scenario(target_file: Path):
 
 def analyze(proj_name: str, target_file: Path, base_class):
     if base_class is TSSL:
-        with open(MAPS_DIR / proj_name / 'tssl.json', 'r', encoding='utf-8') as f:
+        with open(CONFIG_DIR / proj_name / 'tssl_map.json', 'r', encoding='utf-8') as f:
             tssl_config = json.load(f)
         instance = TSSL(tssl_config)
     else:
