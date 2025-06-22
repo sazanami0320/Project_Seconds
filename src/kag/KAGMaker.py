@@ -35,7 +35,7 @@ class KAGMaker:
                     chara_id = item['cid']
                     self.stage.tick_line(chara_id, render=not self.cg_mode)
                     if chara_id.startswith('$'): # Take this as an NPC
-                        self.writeln(f"@npc {item['alias']}")
+                        self.writeln(f"@npc id=\"{item['alias']}\"")
                     elif chara_id == '旁白':
                         pass
                     else:
@@ -44,7 +44,7 @@ class KAGMaker:
                         if 'alias' in item:
                             # namelist.tjs actually compiles into npc macros.
                             # So as long as we do not play with fontcolor, this is correct:
-                            chara_command = f"@npc {item['alias']}"
+                            chara_command = f"@npc id=\"{item['alias']}\""
                         else:
                             chara_command = f"@{chara_id}"
                         self.writeln(chara_command)
