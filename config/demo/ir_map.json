@@ -16,8 +16,9 @@
         "入名楼顶楼观景处": "k2_high_floor",
         "大台阶上的空中花园": "k2_nmb_garden",
         "女厕外走廊": "k2_hallway",
+        "宿舍": "k1_bedroom",
         "操场": "k1_playground",
-        "操场2": "k1_playground",
+        "操场2": "k1_playground_corner",
         "操场通往入名楼的林荫路": "k1_road",
         "昏暗走廊": "k2_slient_hallway",
         "社团活动区走廊": "k2_hallway_wall",
@@ -28,7 +29,7 @@
         "aoi屹立于大地之上": "k1_aoi_playground",
         "入名楼走廊": "k2_hallway",
         "少年少女在落地窗前手牵着手": "k2_high_floor",
-        "走廊尽头的墙": "k2_hallway_wall",
+        "走廊尽头的窗户": "k2_corridor_hidden",
         "飞鸟灯坐在桌子尽头头戴兜帽": "k2_room_dark",
         "飞鸟灯掀开兜帽": "k2_room_light"
     },
@@ -99,8 +100,10 @@
         }
     },
     "se2id": {
+        "invade": "invade_1",
+        "tentacle": "tentacle_1",
         "倒茶声": "pouringtea_light_short",
-        "叮铃铃": "ringtone_school",
+        "叮铃铃": "ringtone_bike",
         "开门声+空调运转声+门关闭声+人声嘈杂减弱": "door_heavey",
         "急促脚步": "step_one_slow_fartonear",
         "爆炸": "Heavyexplosion",

@@ -10,5 +10,11 @@
         "mio": 250,
         "tomori": 160,
         "yukari": 200
+    },
+    "name_map": {
+        "aoi": "葵",
+        "mio": "澪",
+        "tomori": "灯",
+        "yukari": "缘"
     }
 }
