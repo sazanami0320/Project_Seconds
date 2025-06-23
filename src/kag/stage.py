@@ -107,14 +107,14 @@ class Stage:
             new_pos = self.markers[self.occupation_mode][layer_index]
             # TODO: Support kyori
             if old_pos != new_pos:
-                command_capsule.append(f"@move layer={layer_index} time=200"
-                                       f" path=\"({new_pos}, {self.chara_heights[chara_id]}, 255)\"")
+                command_capsule.append(f"@move time=\"200\" path=\"({new_pos}, {self.chara_heights[chara_id]}, 255)\" "
+                                       f"layer=\"{layer_index}\"")
                 wm_count += 1
             if back_flag:
-                command_capsule.append(f"@copylay srclayer={layer_index} destlayer={layer_index} destpage=back")
-        command_capsule.append('[wm]' * wm_count)
+                command_capsule.append(f"@copylay destlayer=\"{layer_index}\" destpage=\"back\" srclayer=\"{layer_index}\"")
+        command_capsule.extend(['@wm'] * wm_count)
         if back_flag:
-            command_capsule.append(f"@copylay srclayer=base destlayer=base destpage=back")
+            command_capsule.append(f"@copylay destlayer=\"base\" destpage=\"back\" srclayer=\"base\"")
         # Pass 2: Show up characters in one change.
         for chara_id, (exp_id, kyori) in commands.items():
             layer_index = self.stage_occupation.index(chara_id)
@@ -125,23 +125,23 @@ class Stage:
             self.stance_record[chara_id] = fg_file.name
             self.stance_counter[chara_id] = 0
             if back_flag:
-                command_capsule.append(f"@image storage={fg_file.stem} layer={layer_index} page=back "
-                                       f"left={chara_pos} top={self.chara_heights[chara_id]}")
+                command_capsule.append(f"@image left=\"{chara_pos}\" page=\"back\" layer=\"{layer_index}\" "
+                                       f"top=\"{self.chara_heights[chara_id]}\" storage=\"{fg_file.stem}\"")
             else:
-                command_capsule.append(f"@fg storage={fg_file.stem} layer={layer_index} " 
-                                f"left={chara_pos} top={self.chara_heights[chara_id]}")
+                command_capsule.append(f"@fg left=\"{chara_pos}\" layer=\"{layer_index}\" " 
+                                f"top=\"{self.chara_heights[chara_id]}\" storage=\"{fg_file.stem}\"")
         if back_flag:
-            command_capsule.append(f"@trans time=500 method=crossfade")
+            command_capsule.append('@trans time="500" method="crossfade"')
             command_capsule.append("@wt")
                 
     def _charas_update(self, command_capsule: List[str], commands: Dict[str, any]):
         commands_count = len(commands)
         back_flag = commands_count > 1
         if back_flag:
-            command_capsule.append(f"@copylay srclayer=base destlayer=base destpage=back")
+            command_capsule.append(f"@copylay destlayer=\"base\" destpage=\"back\" srclayer=\"base\"")
             for layer_index, chara_id in enumerate(self.stage_occupation):
                 if chara_id is not None:
-                    command_capsule.append(f"@copylay srclayer={layer_index} destlayer={layer_index} destpage=back")
+                    command_capsule.append(f"@copylay destlayer=\"{layer_index}\" destpage=\"back\" srclayer=\"{layer_index}\"")
         for chara_id, command in commands.items():
             layer_index = self.stage_occupation.index(chara_id)
             chara_pos = self.markers[self.occupation_mode][layer_index]
@@ -160,13 +160,13 @@ class Stage:
             self.stance_record[chara_id] = fg_file.name
             self.stance_counter[chara_id] = 0
             if back_flag:
-                command_capsule.append(f"@image storage={fg_file.stem} layer={layer_index} page=back "
-                                       f"left={chara_pos} top={self.chara_heights[chara_id]}")
+                command_capsule.append(f"@image left=\"{chara_pos}\" page=\"back\" layer=\"{layer_index}\" "
+                                       f"top=\"{self.chara_heights[chara_id]}\" storage=\"{fg_file.stem}\"")
             else:
-                command_capsule.append(f"@fg storage={fg_file.stem} layer={layer_index} " 
-                                f"left={chara_pos} top={self.chara_heights[chara_id]}")
+                command_capsule.append(f"@fg left=\"{chara_pos}\" layer=\"{layer_index}\" " 
+                                f"top=\"{self.chara_heights[chara_id]}\" storage=\"{fg_file.stem}\"")
         if back_flag:
-            command_capsule.append(f"@trans time=500 method=crossfade")
+            command_capsule.append('@trans time="500" method="crossfade"')
             command_capsule.append("@wt")
             
     
@@ -179,7 +179,7 @@ class Stage:
                 continue
             old_pos_dict[chara_id] = (layer_index, self.markers[self.occupation_mode])
             if back_flag and chara_id not in commands:
-                command_capsule.append(f"@copylay srclayer={layer_index} destlayer={layer_index} destpage=back")
+                command_capsule.append(f"@copylay destlayer=\"{layer_index}\" destpage=\"back\" srclayer=\"{layer_index}\"")
         for chara_id in commands.keys():
             layer_index = self.stage_occupation.index(chara_id)
             if self.occupation_mode >= self.antei_level:
@@ -188,10 +188,10 @@ class Stage:
             else:
                 self.stage_occupation[layer_index] = None
             if not back_flag:
-                command_capsule.append(f"@clfg layer={layer_index}")
+                command_capsule.append(f"@clfg layer=\"{layer_index}\"")
         if back_flag:
-            command_capsule.append(f"@copylay srclayer=base destlayer=base destpage=back")
-            command_capsule.append(f"@trans time=500 method=crossfade")
+            command_capsule.append('@copylay destlayer="base" destpage="back" srclayer="base"')
+            command_capsule.append('@trans method="crossfade" time="500"')
             command_capsule.append("@wt")
         wm_count = 0
         for new_layer_index, chara_id in enumerate(self.stage_occupation):
@@ -200,13 +200,13 @@ class Stage:
             old_layer_index, old_pos = old_pos_dict[chara_id]
             new_pos = self.markers[self.occupation_mode][new_layer_index]
             if old_layer_index != new_layer_index:
-                command_capsule.append(f"@copylay srclayer={old_layer_index} destlayer={new_layer_index}")
+                command_capsule.append(f"@copylay destlayer=\"{new_layer_index}\" srclayer=\"{old_layer_index}\"")
                 command_capsule.append(f"@freeimage layer={old_layer_index}")
             if old_pos != new_pos:
-                command_capsule.append(f"@move layer={new_layer_index} time=200"
-                                       f" path=\"({new_pos}, {self.chara_heights[chara_id]}, 255)\"")
+                command_capsule.append(f"@move time=200 path=\"({new_pos}, {self.chara_heights[chara_id]}, 255)\" "
+                                       f"layer=\"{new_layer_index}\"")
                 wm_count += 1
-        command_capsule.append('[wm]' * wm_count)
+        command_capsule.extend(['@wm'] * wm_count)
 
     def render_on_back(self):
         for layer_index, (chara_id, pos) in enumerate(zip(self.stage_occupation, self.markers[self.occupation_mode])):
@@ -215,13 +215,13 @@ class Stage:
             exp_id = self.current_stage[chara_id]
             fg_file = random.choice(self.asset_index['fg'][chara_id][exp_id])
             self.stance_counter[chara_id] = 0
-            self.writeln(f"@image storage={fg_file.stem} layer={layer_index} page=back "
-                                   f"left={pos} top={self.chara_heights[chara_id]}")
+            self.writeln(f"@image left=\"{pos}\" page=\"back\" layer=\"{layer_index}\" "
+                                    f"top=\"{self.chara_heights[chara_id]}\" storage=\"{fg_file.stem}\"")
             
     def clear(self):
         for layer_index, chara_id in enumerate(self.stage_occupation):
             if chara_id is not None:
-                self.writeln(f"@freeimage layer={layer_index}")
+                self.writeln(f"@freeimage layer=\"{layer_index}\"")
         self.occupation_mode = 0
         self.stage_occupation = [None]
         self.current_stage.clear()
