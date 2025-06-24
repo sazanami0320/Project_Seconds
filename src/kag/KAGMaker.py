@@ -27,7 +27,6 @@ class KAGMaker:
     
     def __call__(self, *args, **kwds):
         proj_name, irs, names = args
-        line_indent = kwds['line_indent'] if 'line_indent' in kwds else 4
         for chapter_index in range(len(irs)):
             name = names[chapter_index]
             output_path = OUTPUT_DIR / proj_name / f"{name}.ks"
@@ -42,6 +41,8 @@ class KAGMaker:
                     self.pre_line_hook()
                     chara_id = item['cid']
                     self.stage.tick_line(chara_id, render=not self.cg_mode)
+                    if 'voice' in item:
+                        self.writeln(f"@playse buf=\"1\" storage=\"{item['voice']}\"")
                     if chara_id.startswith('$'): # Take this as an NPC
                         self.writeln(f"@npc id=\"{item['alias']}\"")
                     elif chara_id == '旁白':
@@ -58,7 +59,9 @@ class KAGMaker:
                         else:
                             chara_command = f"@{chara_id}"
                         self.writeln(chara_command)
-                    self.writeln(f"{' ' * line_indent}{item['line']} [w]") # default w
+                    self.writeln(f"{item['line']} [w]") # default w
+                    if 'voice' in item:
+                        self.writeln(f"@ws")
                     self.post_line_hook()
                 elif item['type'] == 'systems':
                     for system_item in item['content']:

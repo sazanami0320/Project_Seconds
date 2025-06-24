@@ -18,13 +18,19 @@ class Unbabel:
     def __init__(self, map_path: Path, index: dict):
         self.result = None
         self.map_path = map_path
-        with map_path.open('r', encoding='utf-8') as f:
-            config = json.load(f)
-        self.chara_map = config['_name2id']
-        self.bg_map = config['bg2id']
-        self.cg_map = config['cg2id']
-        self.fg_map = config['fg2id']
-        self.se_map = config['se2id']
+        with (map_path / 'ir_map.json').open('r', encoding='utf-8') as f:
+            ir_map = json.load(f)
+        self.chara_map = ir_map['_name2id']
+        self.bg_map = ir_map['bg2id']
+        self.cg_map = ir_map['cg2id']
+        self.fg_map = ir_map['fg2id']
+        self.se_map = ir_map['se2id']
+        with (map_path / 'ir_config.json').open('r', encoding='utf-8') as f:
+            ir_config = json.load(f)
+        self.voiced_charas = ir_config['voiced_characters']
+        if ir_config['voice_version'] not in index['voice']:
+            raise RuntimeError(f"Fail to find voice of {ir_config['voice_version']}")
+        self.voice_map = index['voice'][ir_config['voice_version']]
         self.asset_index = index
         self._expand_index()
     
@@ -89,22 +95,38 @@ class Unbabel:
         else:
             return None
 
-    def _pass(self, obj, dry_run: bool=True, suppress_level: int=0):
+    def _pass(self, obj, title: str, dry_run: bool=True, suppress_level: int=0):
         result = []
         if dry_run:
             unmapped_background = set()
             unmapped_cg = set()
             unmapped_expression = set()
             unmapped_sound = set()
+            unmapped_voice = set()
         for item in obj:
             if item['type'] == 'comment':
                 if not dry_run:
                     result.append(item)
             elif item['type'] == 'line':
+                chara_id = self._map_chara(item['cid'])
                 if dry_run:
+                    if chara_id in self.voiced_charas and item['id'] not in self.voice_map[title]:
+                        unmapped_voice.add((item['src'], item['id']))
                     # We need not check bg or charas field 'cause they are copy of system instr's counterparts.
                     # Also, they are redundant fields used in the AST stage.
                     continue
+                if chara_id in self.voiced_charas:
+                    if item['id'] not in self.voice_map[title]:
+                        if suppress_level == 0:
+                            raise SourcedException(item['src'], 'Fail to find the voice of this line.')
+                        elif suppress_level < 3:
+                            voice = 'vaccum'
+                        else:
+                            voice = None
+                    else:
+                        voice = self.voice_map[title][item['id']].stem
+                else:
+                    voice = None
                 mapped_item = {
                     'type': 'line',
                     'src': item['src'],
@@ -114,6 +136,8 @@ class Unbabel:
                 }
                 if 'alias' in item:
                     mapped_item['alias'] = item['alias']
+                if voice is not None:
+                    mapped_item['voice'] = voice
                 result.append(mapped_item)
             elif item['type'] == 'systems':
                 mapped_systems = []
@@ -180,12 +204,12 @@ class Unbabel:
                 # This is a system-level fault.
                 raise RuntimeError(f"Cannot recognize item of type {item['type']}.")
         if dry_run:
-            return unmapped_background, unmapped_cg, unmapped_expression, unmapped_sound
+            return unmapped_background, unmapped_cg, unmapped_expression, unmapped_sound, unmapped_voice
         else:
             return result
         
     def _save_maps(self):
-        with self.map_path.open('w', encoding='utf-8') as f:
+        with (self.map_path / 'ir_map.json').open('w', encoding='utf-8') as f:
             json.dump({
                 '_name2id': self.chara_map,
                 'bg2id': self.bg_map,
@@ -196,7 +220,7 @@ class Unbabel:
 
 
     def __call__(self, *args, **kwds) -> bool:
-        objs, = args
+        objs, titles = args
         if 'suppress_level' in kwds:
             suppress_level = kwds['suppress_level']
             kwds.pop('suppress_level')
@@ -204,11 +228,11 @@ class Unbabel:
             suppress_level = 0
         hooks = DEFAULT_HOOKS.copy()
         hooks.update(kwds)
-        ump_sets = (set(), set(), set(), set())
-        for obj in objs:
-            for old, new in zip(ump_sets, self._pass(obj, dry_run=True)):
+        ump_sets = (set(), set(), set(), set(), set())
+        for obj, title in zip(objs, titles):
+            for old, new in zip(ump_sets, self._pass(obj, title, dry_run=True)):
                 old.update(new)
-        ump_bg, ump_cg, ump_fg, ump_se = ump_sets
+        ump_bg, ump_cg, ump_fg, ump_se, ump_vc = ump_sets
         if ump_bg:
             new_bg_map = hooks['ask_bg'](ump_bg)
             if new_bg_map:
@@ -229,6 +253,8 @@ class Unbabel:
             new_se_map = hooks['ask_se'](ump_se)
             if new_se_map:
                 self.se_map.update(new_se_map)
+        if ump_vc:
+            print(ump_vc)
         self._save_maps()
-        return [self._pass(obj, dry_run=False, suppress_level=suppress_level) for obj in objs]
+        return [self._pass(obj, title, dry_run=False, suppress_level=suppress_level) for obj, title in zip(objs, titles)]
         

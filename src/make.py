@@ -32,8 +32,8 @@ if __name__ == '__main__':
     output_tokens(ASTScript(), objs, titles, output_folder / f"{proj_name}_ast.json")
 # AST => IR
     index = get_index(WORKSPACE / 'assets')
-    ir_compiler = Unbabel(CONFIG_DIR / proj_name / 'ir_map.json', index)
-    irs = ir_compiler(objs, suppress_level=supress_level)
+    ir_compiler = Unbabel(CONFIG_DIR / proj_name, index)
+    irs = ir_compiler(objs, titles, suppress_level=supress_level)
     with open(output_folder / f"{proj_name}_ir.json", 'w', encoding='utf-8') as f:
         json.dump(irs, f, ensure_ascii=False)
 # IR => Instr

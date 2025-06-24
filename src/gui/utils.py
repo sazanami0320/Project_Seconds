@@ -19,11 +19,11 @@ def to_ast(target_folder: Path):
     titles = list(map(lambda path: path.stem, sources))
     output_tokens(HomoSapiensText(), objs, titles, output_folder / f"{proj_name}.txt", count=True)
     output_tokens(ASTScript(), objs, titles, output_folder / f"{proj_name}_ast.json")
-    return objs
+    return objs, titles
 
-def to_ir(proj_name: str, objs: list, suppress_level: int, ask_hook):
+def to_ir(proj_name: str, objs: list, titles: list, suppress_level: int, ask_hook):
     asset_index = get_index(WORKSPACE / 'assets')
-    ir_compiler = Unbabel(CONFIG_DIR / proj_name / 'ir_map.json', asset_index)
+    ir_compiler = Unbabel(CONFIG_DIR / proj_name, asset_index)
     def expand_map_key_wrapper(func: callable):
         def expand_map_key(map: dict):
             result = {}
@@ -42,4 +42,4 @@ def to_ir(proj_name: str, objs: list, suppress_level: int, ask_hook):
         'ask_fg': expand_map_key_wrapper(partial(ask_hook, '立绘', {'角色表情': asset_index['fg']})),
         'ask_se': partial(ask_hook, '音效', {'音效': asset_index['se']}),
     }
-    objs = ir_compiler(objs, suppress_level=suppress_level, **hooks)
+    objs = ir_compiler(objs, titles, suppress_level=suppress_level, **hooks)

@@ -87,11 +87,11 @@ class MakeApp(App):
         # so threading might be the best solution.
         self.call_from_thread(self.alarm, f"正在尝试编译{self.scenario_dir.stem}...")
         self.query_exactly_one(Error).scenario_dir = self.scenario_dir # This is not reactive
-        status, objs = self.wrapped_call(to_ast, self.scenario_dir)
+        status, (objs, titles) = self.wrapped_call(to_ast, self.scenario_dir)
         # Any fail would end this worker.
         if not status:
             return
-        status, irs = self.wrapped_call(to_ir, self.scenario_dir.stem, objs, self.suppress_level, self.ask_hook)
+        status, irs = self.wrapped_call(to_ir, self.scenario_dir.stem, objs, titles, self.suppress_level, self.ask_hook)
         # GUI is only used for asset mapping.
         # You can use CLI to generate KAG scripts.
         # (If you want it then you have to PR it)

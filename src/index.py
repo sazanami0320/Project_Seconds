@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import Dict, List, Optional
 import pickle
 import re
+from zipfile import ZipFile
 
 PIC_SUFFIXES = ['png', 'jpg', 'jpeg', 'bmp', 'raw']
 AUDIO_SUFFIXES = ['ogg', 'mp3', 'wav', 'flac']
@@ -60,6 +61,37 @@ def index_hierarchy(hierarchical_dir: Path, accept_suffixes: Optional[List[str]]
             current[name] = h_item
     return result
 
+def enumerate_zip_file(zip_path: Path, accept_suffixes: List[str]=[]) -> List[Path]:
+    with ZipFile(zip_path) as zip:
+        vitrual_assets = map(lambda name: zip_path / name, 
+                             filter(lambda name: name.split('.')[-1] in accept_suffixes, 
+                                map(lambda info: info.filename, zip.infolist())))
+    return list(vitrual_assets)
+
+def index_voice(current_dir: Path, result_dict: Dict[str, Dict]):
+    for zip_file in current_dir.iterdir():
+        if zip_file.is_dir():
+            index_voice(zip_file, result_dict)
+            continue
+        elif zip_file.suffix != '.zip':
+            continue
+        virtual_assets = enumerate_zip_file(zip_file, AUDIO_SUFFIXES)
+        if len(virtual_assets) == 0:
+            continue
+        # Well, the naming sense is...
+        short_key = zip_file.stem
+        long_key = ''
+        start_dir = zip_file.parent.absolute()
+        while start_dir.name != 'voice':
+            long_key = start_dir.name + long_key
+            start_dir = start_dir.parent.absolute()
+        result = dict(map(lambda va: (va.name.split('_')[1], va), virtual_assets))
+        if long_key in result_dict:
+            result_dict[long_key][short_key] = result
+        else:
+            result_dict[long_key] = {short_key: result}
+
+
 def update_index(asset_dir: Path, art_dir_name: Optional[str]):
     index = {}
     if art_dir_name is None:
@@ -89,6 +121,10 @@ def update_index(asset_dir: Path, art_dir_name: Optional[str]):
                 else:
                     new_fg_dict[chara_name][expression] = [path]
     index['fg'] = new_fg_dict
+    # Deal with voice specially
+    new_voice_dict = {}
+    index_voice(art_dir / 'voice', new_voice_dict)
+    index['voice'] = new_voice_dict
     with open(asset_dir / 'index.pickle', 'wb') as f:
         pickle.dump(index, f)
     return index
