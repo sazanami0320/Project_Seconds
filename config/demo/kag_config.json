@@ -7,9 +7,9 @@
     ],
     "heights": {
         "aoi": 200,
-        "mio": 250,
-        "tomori": 160,
-        "yukari": 200
+        "mio": 260,
+        "tomori": 145,
+        "yukari": 210
     },
     "name_map": {
         "aoi": "葵",
