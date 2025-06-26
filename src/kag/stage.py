@@ -79,8 +79,6 @@ class Stage:
                 self.writeln(command_line)
     
     def _charas_show_up(self, command_capsule: List[str], commands: Dict[str, any]):
-        commands_count = len(commands)
-        back_flag = commands_count > 1
         old_pos_dict = {}
         for layer_index, chara_id in enumerate(self.stage_occupation):
             if chara_id is not None:
@@ -110,11 +108,8 @@ class Stage:
                 command_capsule.append(f"@move time=\"200\" path=\"({new_pos}, {self.chara_heights[chara_id]}, 255)\" "
                                        f"layer=\"{layer_index}\"")
                 wm_count += 1
-            if back_flag:
-                command_capsule.append(f"@copylay destlayer=\"{layer_index}\" destpage=\"back\" srclayer=\"{layer_index}\"")
         command_capsule.extend(['@wm'] * wm_count)
-        if back_flag:
-            command_capsule.append(f"@copylay destlayer=\"base\" destpage=\"back\" srclayer=\"base\"")
+        command_capsule.append('@backlay')
         # Pass 2: Show up characters in one change.
         for chara_id, (exp_id, kyori) in commands.items():
             layer_index = self.stage_occupation.index(chara_id)
@@ -124,24 +119,13 @@ class Stage:
             fg_file = random.choice(self.asset_index['fg'][chara_id][exp_id])
             self.stance_record[chara_id] = fg_file.name
             self.stance_counter[chara_id] = 0
-            if back_flag:
-                command_capsule.append(f"@image left=\"{chara_pos}\" page=\"back\" layer=\"{layer_index}\" "
-                                       f"top=\"{self.chara_heights[chara_id]}\" storage=\"{fg_file.stem}\"")
-            else:
-                command_capsule.append(f"@fg left=\"{chara_pos}\" layer=\"{layer_index}\" " 
-                                f"top=\"{self.chara_heights[chara_id]}\" storage=\"{fg_file.stem}\"")
-        if back_flag:
-            command_capsule.append('@trans time="500" method="crossfade"')
-            command_capsule.append("@wt")
+            command_capsule.append(f"@image left=\"{chara_pos}\" page=\"back\" layer=\"{layer_index}\" "
+                                    f"top=\"{self.chara_heights[chara_id]}\" storage=\"{fg_file.stem}\" visible=\"true\"")
+        command_capsule.append('@trans time="500" method="crossfade"')
+        command_capsule.append("@wt")
                 
     def _charas_update(self, command_capsule: List[str], commands: Dict[str, any]):
-        commands_count = len(commands)
-        back_flag = commands_count > 1
-        if back_flag:
-            command_capsule.append(f"@copylay destlayer=\"base\" destpage=\"back\" srclayer=\"base\"")
-            for layer_index, chara_id in enumerate(self.stage_occupation):
-                if chara_id is not None:
-                    command_capsule.append(f"@copylay destlayer=\"{layer_index}\" destpage=\"back\" srclayer=\"{layer_index}\"")
+        command_capsule.append('@backlay')
         for chara_id, command in commands.items():
             layer_index = self.stage_occupation.index(chara_id)
             chara_pos = self.markers[self.occupation_mode][layer_index]
@@ -159,27 +143,19 @@ class Stage:
                 fg_file = random.choice(self.asset_index['fg'][chara_id][exp_id])
             self.stance_record[chara_id] = fg_file.name
             self.stance_counter[chara_id] = 0
-            if back_flag:
-                command_capsule.append(f"@image left=\"{chara_pos}\" page=\"back\" layer=\"{layer_index}\" "
-                                       f"top=\"{self.chara_heights[chara_id]}\" storage=\"{fg_file.stem}\"")
-            else:
-                command_capsule.append(f"@fg left=\"{chara_pos}\" layer=\"{layer_index}\" " 
-                                f"top=\"{self.chara_heights[chara_id]}\" storage=\"{fg_file.stem}\"")
-        if back_flag:
-            command_capsule.append('@trans time="500" method="crossfade"')
-            command_capsule.append("@wt")
+            command_capsule.append(f"@image left=\"{chara_pos}\" page=\"back\" layer=\"{layer_index}\" " 
+                            f"top=\"{self.chara_heights[chara_id]}\" storage=\"{fg_file.stem}\" visible=\"true\"")
+        command_capsule.append('@trans time="500" method="crossfade"')
+        command_capsule.append("@wt")
             
     
     def _charas_leave(self, command_capsule: List[str], commands: Dict[str, any]):
-        commands_count = len(commands)
-        back_flag = commands_count > 1
         old_pos_dict = {}
         for layer_index, chara_id in enumerate(self.stage_occupation):
             if chara_id is None:
                 continue
             old_pos_dict[chara_id] = (layer_index, self.markers[self.occupation_mode])
-            if back_flag and chara_id not in commands:
-                command_capsule.append(f"@copylay destlayer=\"{layer_index}\" destpage=\"back\" srclayer=\"{layer_index}\"")
+        command_capsule.append('@backlay')
         for chara_id in commands.keys():
             layer_index = self.stage_occupation.index(chara_id)
             if self.occupation_mode >= self.antei_level:
@@ -187,12 +163,9 @@ class Stage:
                 self.stage_occupation.pop(layer_index)
             else:
                 self.stage_occupation[layer_index] = None
-            if not back_flag:
-                command_capsule.append(f"@clfg layer=\"{layer_index}\"")
-        if back_flag:
-            command_capsule.append('@copylay destlayer="base" destpage="back" srclayer="base"')
-            command_capsule.append('@trans method="crossfade" time="500"')
-            command_capsule.append("@wt")
+            command_capsule.append(f"@freeimage layer=\"{layer_index}\" page=\"back\"")
+        command_capsule.append('@trans method="crossfade" time="500"')
+        command_capsule.append("@wt")
         wm_count = 0
         for new_layer_index, chara_id in enumerate(self.stage_occupation):
             if chara_id is None:
@@ -216,12 +189,14 @@ class Stage:
             fg_file = random.choice(self.asset_index['fg'][chara_id][exp_id])
             self.stance_counter[chara_id] = 0
             self.writeln(f"@image left=\"{pos}\" page=\"back\" layer=\"{layer_index}\" "
-                                    f"top=\"{self.chara_heights[chara_id]}\" storage=\"{fg_file.stem}\"")
-            
-    def clear(self):
+                            f"top=\"{self.chara_heights[chara_id]}\" storage=\"{fg_file.stem}\" visible=\"true\"")
+
+    def clear_fg(self, page: str='back'):
         for layer_index, chara_id in enumerate(self.stage_occupation):
             if chara_id is not None:
-                self.writeln(f"@freeimage layer=\"{layer_index}\"")
+                self.writeln(f"@freeimage layer=\"{layer_index}\" page=\"{page}\"") 
+    
+    def reset_record(self):
         self.occupation_mode = 0
         self.stage_occupation = [None]
         self.current_stage.clear()
@@ -229,7 +204,6 @@ class Stage:
         self.stance_counter.clear()
         self.stance_record.clear()
         self.stack.clear()
-        
 
     def tick_line(self, speaker_id: str, render=True):
         for key in self.stance_counter.keys():

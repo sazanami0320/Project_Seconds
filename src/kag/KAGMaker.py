@@ -20,10 +20,11 @@ class KAGMaker:
         markers = self.config['markers']
         heights = self.config['heights']
         self.stage = Stage(markers, heights, asset_index, self.writeln)
-        self.effect_manager = EffectManager(self.writeln)
+        self.effect_manager = EffectManager(self.writeln, self.stage)
         # Variables for line hooks
         self.transform_cache = None
         self.font_flag = False
+        self.voice_flag = False
     
     def __call__(self, *args, **kwds):
         proj_name, irs, names = args
@@ -42,7 +43,8 @@ class KAGMaker:
                     chara_id = item['cid']
                     self.stage.tick_line(chara_id, render=not self.cg_mode)
                     if 'voice' in item:
-                        self.writeln(f"@playse buf=\"1\" storage=\"{item['voice']}\"")
+                        self.writeln(f"@vo storage=\"{item['voice']}\"")
+                        self.voice_flag = True
                     if chara_id.startswith('$'): # Take this as an NPC
                         self.writeln(f"@npc id=\"{item['alias']}\"")
                     elif chara_id == '旁白':
@@ -60,14 +62,12 @@ class KAGMaker:
                             chara_command = f"@{chara_id}"
                         self.writeln(chara_command)
                     self.writeln(f"{item['line']} [w]") # default w
-                    if 'voice' in item:
-                        self.writeln(f"@ws")
                     self.post_line_hook()
                 elif item['type'] == 'systems':
                     for system_item in item['content']:
                         self.compile_system(system_item)
             if chapter_index == len(irs) - 1:
-                self.writeln('@jump storage="end.ks"')
+                self.writeln('@gotostart')
             else:
                 self.writeln(f"@jump storage=\"{names[chapter_index + 1]}.ks\"")
             with output_path.open('w', encoding='utf-16') as f:
@@ -77,14 +77,26 @@ class KAGMaker:
             # Syujinko or Die!
             index = self.chara_list.index('主角')
             self.chara_list.pop(index)
+            # NVLMaker assumes that the first item is Syujinko while the second one is passers-by.
+            self.chara_list.insert(0, '主角')
+        with open(OUTPUT_DIR / proj_name / 'appendix' / 'macro_name.ks', 'w', encoding='utf-8') as f:
+            f.write('*start\n')
+            for index, chara_tag in enumerate(self.chara_list):
+                f.writelines([
+                    f"[macro name={chara_tag}]\n",
+                    f"[npc * id={chara_tag} color=0xfdeff2]\n",
+                    '[endmacro]\n',
+                ])
+            f.write('[return]\n')
         with open(OUTPUT_DIR / proj_name / 'appendix' / 'namelist.tjs', 'w', encoding='utf-8') as f:
+            self.chara_list.insert(1, '路人')
             f.write('(const) [\n')
             for index, chara_tag in enumerate(self.chara_list):
                 f.writelines([
                     ' (const) %[\n',
                     f"  \"name\" => \"{chara_tag}\",\n",
                     '  "face" => "",\n',
-                    '  "color" => "0x000000",\n'
+                    '  "color" => "0xfdeff2",\n'
                     f"  \"tag\" => \"{chara_tag}\"\n"
                     ' ]'
                 ])
@@ -92,15 +104,6 @@ class KAGMaker:
                     f.write(',') # In case nvlmaker does not recognize trailing comma
                 f.write('\n')
             f.write(']\n')
-        with open(OUTPUT_DIR / proj_name / 'appendix' / 'macro_name.ks', 'w', encoding='utf-8') as f:
-            f.write('*start\n')
-            for index, chara_tag in enumerate(self.chara_list):
-                f.writelines([
-                    f"[macro name={chara_tag}]\n",
-                    f"[npc * id={chara_tag} color=0xffffff80]\n",
-                    '[endmacro]\n',
-                ])
-            f.write('[return]\n')
         
         self.kag_lines = None
 
@@ -114,28 +117,41 @@ class KAGMaker:
             if self.transform_cache:
                 transform_cache = self.transform_cache
                 self.transform_cache = None
+                self.writeln(';Transition')
                 self.compile_system({'type': 'background', 'content': transform_cache})
             self.background = content
+            # EXPERIMENTAL!
+            self.effect_manager.reset_effect()
+            self.writeln('@backlay')
+            self.writeln(f"@image layer=\"stage\" page=\"back\" storage=\"{content}\" visible=\"true\"")
             if self.cg_mode:
-                self.writeln(f"@bg page=\"back\" storage=\"{content}\"")
                 self.exit_cg_mode()
             else:
-                # EXPERIMENTAL!
-                self.stage.clear()
-                self.writeln(f"@bg storage=\"{content}\"")
+                self.stage.clear_fg(page='back')
+            self.writeln('@trans method=\"crossfade\" time=\"700\"')
+            self.writeln('@wt')
+            self.stage.reset_record()
         elif system_type == 'cg':
+            self.writeln('@backlay')
             if not self.cg_mode:
                 self.enter_cg_mode()
-            self.writeln(f"@bg storage=\"{content}\"")
+            self.writeln(f"@image layer=\"stage\" page=\"back\" storage=\"{content}\" visible=\"true\"")
+            self.writeln('@trans method=\"crossfade\" time=\"700\"')
+            self.writeln('@wt')
         elif system_type == 'sound':
             self.writeln(f"@se storage=\"{content}\"")
+            self.writeln('@ws canskip=\"true\"')
         elif system_type == 'tachie':
             if content['exp'].startswith('<'):
                 return
             self.stage.parse_chara_command(content['cid'], content['exp'].split('_')[1])
         elif system_type == 'hide':
             if content == '全部':
-                self.writeln('@clfg')
+                self.writeln('@backlay')
+                self.stage.clear_fg(page='back')
+                self.writeln('@trans method=\"crossfade\" time=\"500\"')
+                self.writeln('@wt')
+                self.stage.reset_record()
             else:
                 self.stage.parse_hide_command(content)
         elif system_type == 'reset':
@@ -165,18 +181,30 @@ class KAGMaker:
     
     def pre_line_hook(self):
         if self.transform_cache:
-            self.writeln(f"@bg storage=\"{self.transform_cache}\"")
-            self.writeln(f"@bg storage=\"{self.background}\"")
+            self.writeln(';==Transition==')
+            self.writeln('@backlay')
+            self.stage.clear_fg(page='back')
+            self.writeln(f"@image layer=\"stage\" page=\"back\" storage=\"{self.transform_cache}\" time=\"1000\" visible=\"true\"")
+            self.writeln('@trans method="crossfade" time="1000"')
+            self.writeln('@wt')
+            self.writeln('@backlay')
+            self.writeln(f"@image layer=\"stage\" page=\"back\" storage=\"{self.background}\" time=\"1000\" visible=\"true\"")
+            self.writeln('@trans method="crossfade" time="1000"')
+            self.writeln('@wt')
+            self.writeln(f"@backlay")
+            self.writeln(';==End Transition==')
             self.transform_cache = None
 
     def post_line_hook(self):
         if self.font_flag:
             self.writeln('@resetfont')
             self.font_flag = False
+        if self.voice_flag:
+            self.writeln('@endvo')
+            self.voice_flag = False
 
     def enter_cg_mode(self):
-        assert not self.cg_mode
-        self.writeln('@clfg')
+        self.stage.clear_fg(page='back')
         self.cg_mode = True
     
     def exit_cg_mode(self):

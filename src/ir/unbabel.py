@@ -3,14 +3,15 @@
 from typing import Optional
 from pathlib import Path
 import json
-from .propmt_ask import ask_bg, ask_cg, ask_fg, ask_se
+from .propmt_ask import ask_bg, ask_cg, ask_fg, ask_se, ask_vc
 from exception import SourcedException
 
 DEFAULT_HOOKS = {
     'ask_bg': ask_bg,
     'ask_cg': ask_cg,
     'ask_fg': ask_fg,
-    'ask_se': ask_se
+    'ask_se': ask_se,
+    'ask_vc': ask_vc
 }
 
 class Unbabel:
@@ -254,7 +255,8 @@ class Unbabel:
             if new_se_map:
                 self.se_map.update(new_se_map)
         if ump_vc:
-            print(ump_vc)
+            print(f"{len(ump_vc)} voice are unmapped.")
+            hooks['ask_vc'](ump_vc)
         self._save_maps()
         return [self._pass(obj, title, dry_run=False, suppress_level=suppress_level) for obj, title in zip(objs, titles)]
         
