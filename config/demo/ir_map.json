@@ -21,7 +21,7 @@
         "宿舍": "k1_bedroom_flux",
         "操场": "k1_playground",
         "操场2": "k1_playground_corner",
-        "操场通往入名楼的林荫路": "k1_road",
+        "操场通往入名楼的林荫路": "k2_playground_outside",
         "活动室外部走廊": "k2_corridor_door",
         "爆炸": "k1_explosion",
         "社团活动区走廊": "k2_silent_hallway",
