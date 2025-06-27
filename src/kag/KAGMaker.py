@@ -23,7 +23,7 @@ class KAGMaker:
         self.effect_manager = EffectManager(self.writeln, self.stage)
         # Variables for line hooks
         self.transform_cache = None
-        self.font_flag = False
+        self.font_cache = None
         self.voice_flag = False
     
     def __call__(self, *args, **kwds):
@@ -61,6 +61,8 @@ class KAGMaker:
                         else:
                             chara_command = f"@{chara_id}"
                         self.writeln(chara_command)
+                    if self.font_cache is not None:
+                        self.writeln(f"@font size=\"{self.font_cache}\"")
                     self.writeln(f"{item['line']} [w]") # default w
                     self.post_line_hook()
                 elif item['type'] == 'systems':
@@ -173,9 +175,8 @@ class KAGMaker:
         elif system_type == 'effect' or system_type == 'move':
             self.effect_manager.parse_effect(content)
         elif system_type == 'font':
-            self.font_flag = True
             if content == '放大':
-                self.writeln('@font size="80"')
+                self.font_cache = 80
         else: # Transforms, move of focus, and many others:
             self.writeln(f";[需求]{system_type} = {content}")
     
@@ -196,9 +197,9 @@ class KAGMaker:
             self.transform_cache = None
 
     def post_line_hook(self):
-        if self.font_flag:
+        if self.font_cache:
             self.writeln('@resetfont')
-            self.font_flag = False
+            self.font_cache = None
         if self.voice_flag:
             self.writeln('@endvo')
             self.voice_flag = False
