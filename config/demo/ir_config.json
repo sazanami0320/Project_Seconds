@@ -6,5 +6,6 @@
         "yukari",
         "众人"
     ],
-    "voice_version": "Demo 音频第一版中文"
+    "voice_key": "Demo 音频",
+    "default_voice_version": "cn"
 }

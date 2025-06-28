@@ -34,7 +34,7 @@
         "入名楼走廊": "k2_hallway",
         "少年少女在落地窗前手牵着手": "k2_high_floor",
         "走廊尽头的窗户": "k2_corridor_hidden",
-        "飞鸟灯坐在桌子尽头头戴兜帽": "k2_room_dark_new",
+        "飞鸟灯坐在桌子尽头头戴兜帽": "k2_tomori_hood",
         "飞鸟灯掀开兜帽": "k2_room_light"
     },
     "fg2id": {
@@ -100,7 +100,8 @@
             "困惑": "yukari_puzzled",
             "惊讶": "yukari_surprised",
             "感激": "yukari_smile",
-            "正常": "yukari_calm"
+            "正常": "yukari_calm",
+            "胆怯": "yukari_worried"
         }
     },
     "se2id": {

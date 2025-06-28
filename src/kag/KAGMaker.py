@@ -72,7 +72,7 @@ class KAGMaker:
                 self.writeln('@gotostart')
             else:
                 self.writeln(f"@jump storage=\"{names[chapter_index + 1]}.ks\"")
-            with output_path.open('w', encoding='utf-16') as f:
+            with output_path.open('w', encoding='utf-8') as f:
                 f.writelines(self.kag_lines)
         # Try to generate a namelist for futher edit. Is this really necessary?
         if '主角' in self.chara_list:

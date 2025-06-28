@@ -29,9 +29,15 @@ class Unbabel:
         with (map_path / 'ir_config.json').open('r', encoding='utf-8') as f:
             ir_config = json.load(f)
         self.voiced_charas = ir_config['voiced_characters']
-        if ir_config['voice_version'] not in index['voice']:
-            raise RuntimeError(f"Fail to find voice of {ir_config['voice_version']}")
-        self.voice_map = index['voice'][ir_config['voice_version']]
+        if ir_config['voice_key'] not in index['voice']:
+            raise RuntimeError(f"Fail to find voice by {ir_config['voice_key']}")
+        if 'default_voice_version' in ir_config:
+            voice_version = ir_config['default_voice_version']
+        else:
+            voice_version = 'cn' # Legacy for demo...
+        if voice_version not in index['voice'][ir_config['voice_key']]:
+            raise RuntimeError(f"Fail to find voice of {voice_version} version.")
+        self.voice_map = index['voice'][ir_config['voice_key']][voice_version]
         self.asset_index = index
         self._expand_index()
     
@@ -98,6 +104,14 @@ class Unbabel:
 
     def _pass(self, obj, title: str, dry_run: bool=True, suppress_level: int=0):
         result = []
+        possible_voice_keys = list(filter(lambda key: title in key, self.voice_map.keys()))
+        if len(possible_voice_keys) == 0:
+            print(f"Fail to find voices for {title}")
+            title_voice_map = {}
+        elif len(possible_voice_keys) > 1:
+            raise RuntimeError(f"Find duplicate voices for {title}, namely {possible_voice_keys}.")
+        else:
+            title_voice_map = self.voice_map[possible_voice_keys[0]]
         if dry_run:
             unmapped_background = set()
             unmapped_cg = set()
@@ -111,13 +125,13 @@ class Unbabel:
             elif item['type'] == 'line':
                 chara_id = self._map_chara(item['cid'])
                 if dry_run:
-                    if chara_id in self.voiced_charas and item['id'] not in self.voice_map[title]:
+                    if chara_id in self.voiced_charas and item['id'] not in title_voice_map:
                         unmapped_voice.add((item['src'], item['id']))
                     # We need not check bg or charas field 'cause they are copy of system instr's counterparts.
                     # Also, they are redundant fields used in the AST stage.
                     continue
                 if chara_id in self.voiced_charas:
-                    if item['id'] not in self.voice_map[title]:
+                    if item['id'] not in title_voice_map:
                         if suppress_level == 0:
                             raise SourcedException(item['src'], 'Fail to find the voice of this line.')
                         elif suppress_level < 3:
@@ -125,7 +139,7 @@ class Unbabel:
                         else:
                             voice = None
                     else:
-                        voice = self.voice_map[title][item['id']].stem
+                        voice = title_voice_map[item['id']].stem
                 else:
                     voice = None
                 mapped_item = {

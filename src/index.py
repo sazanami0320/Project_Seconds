@@ -85,11 +85,16 @@ def index_voice(current_dir: Path, result_dict: Dict[str, Dict]):
         while start_dir.name != 'voice':
             long_key = start_dir.name + long_key
             start_dir = start_dir.parent.absolute()
-        result = dict(map(lambda va: (va.name.split('_')[1], va), virtual_assets))
-        if long_key in result_dict:
-            result_dict[long_key][short_key] = result
-        else:
-            result_dict[long_key] = {short_key: result}
+        assets_tri = list(map(lambda va: (va.stem.split('_')[2], va.stem.split('_')[1], va), virtual_assets))
+        versions = set(map(lambda tri: tri[0], assets_tri))
+        if long_key not in result_dict:
+            result_dict[long_key] = {}
+        target_dict = result_dict[long_key]
+        for version in versions:
+            if version not in target_dict:
+                target_dict[version] = {}
+            target_dict[version][short_key] = dict(map(lambda tri: (tri[1], tri[2]),
+                                        filter(lambda tri: tri[0] == version, assets_tri)))
 
 
 def update_index(asset_dir: Path, art_dir_name: Optional[str]):
