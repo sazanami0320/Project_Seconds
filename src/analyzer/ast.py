@@ -25,9 +25,9 @@ class ASTBuilder:
         self.hash_len = hash_len
         self.hash_counts = {}
 
-    # Is it really fine to not include cid in this?
-    def make_id(self, serifu: str):
+    def make_id(self, cid: str, serifu: str):
         hasher = hashlib.sha256(b"Project Seconds!")
+        hasher.update(cid.encode('utf-8')) # Add cid in hash to avoic cases like 'The Shadow'
         hasher.update(serifu.encode('utf-8'))
         hash_str = hasher.hexdigest()[:self.hash_len - 1]
         if hash_str in self.hash_counts:
@@ -57,7 +57,7 @@ class ASTBuilder:
             'type': 'line',
             'bg': self.bg,
             'src': src,
-            'id': self.make_id(serifu),
+            'id': self.make_id(jinbutsu, serifu),
             'cid': jinbutsu,
             'line': serifu,
         }

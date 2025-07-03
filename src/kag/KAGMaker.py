@@ -127,7 +127,8 @@ class KAGMaker:
             self.writeln('@backlay')
             self.writeln(f"@image layer=\"stage\" page=\"back\" storage=\"{content}\" visible=\"true\"")
             if self.cg_mode:
-                self.exit_cg_mode()
+                self.stage.render_on_back()
+                self.cg_mode = False
             else:
                 self.stage.clear_fg(page='back')
             self.writeln('@trans method=\"crossfade\" time=\"700\"')
@@ -158,7 +159,10 @@ class KAGMaker:
                 self.stage.parse_hide_command(content)
         elif system_type == 'reset':
             if content == 'cg':
-                self.exit_cg_mode()
+                self.stage.render_on_back()
+                self.writeln('@trans time="200" method="crossfade"')
+                self.writeln('@wt')
+                self.cg_mode = False
             elif content == 'sound':
                 self.writeln('@stopse')
             elif content == 'effect' or content == 'move':
@@ -208,13 +212,5 @@ class KAGMaker:
         self.stage.clear_fg(page='back')
         self.cg_mode = True
     
-    def exit_cg_mode(self):
-        if not self.cg_mode: # This may occur due to supress_level = 3
-            return
-        self.stage.render_on_back()
-        self.writeln('@trans time="50" method="crossfade"')
-        self.writeln('@wt')
-        self.cg_mode = False
-
     def writeln(self, line: str):
         self.kag_lines.append(f"{line}\n")
