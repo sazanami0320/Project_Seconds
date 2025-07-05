@@ -41,7 +41,7 @@ class KAGMaker:
                 elif item['type'] == 'line':
                     self.pre_line_hook()
                     chara_id = item['cid']
-                    self.stage.tick_line(chara_id, render=not self.cg_mode)
+                    self.stage.tick_line(item['id'], chara_id, render=not self.cg_mode)
                     if 'voice' in item:
                         self.writeln(f"@vo storage=\"{item['voice']}\"")
                         self.voice_flag = True

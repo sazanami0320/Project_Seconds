@@ -1,5 +1,4 @@
 from typing import List, Dict, Callable
-import random
 
 # This is much harder then I had thought of
 class StageCommand:
@@ -31,7 +30,7 @@ class Stage:
         self.stance_record = {}
         self.stack = []
         self.asset_index = asset_index
-        random.seed(seed)
+        self.ransu = None
 
     def stack_command(self, command_type: str, chara_id: str, command: str):
         if len(self.stack) > 0 and self.stack[-1].command_type == command_type:
@@ -51,11 +50,8 @@ class Stage:
             self.current_kyori[chara_id] = kyori
             # self.chara_show_up(chara_id, exp_id, kyori, render)
         else:
-            # Check stance
-            stance_count = self.stance_counter[chara_id]
-            if stance_count >= random.randint(3, 6):
-                self.stance_counter[chara_id] = 0
-                self.stack_command('update', chara_id, None)
+            # Set stance counter immediately.
+            self.stance_counter[chara_id] += 10
 
     def parse_hide_command(self, chara_id: str):
         self.stack_command('delete', chara_id, None)
@@ -75,8 +71,13 @@ class Stage:
                 raise RuntimeError('Impossible')
         self.stack.clear()
         if render:
+            comment_flag = len(command_line) > 5
+            if comment_flag:
+                self.writeln(';Tachie segment start')
             for command_line in command_capsule:
                 self.writeln(command_line)
+            if comment_flag:
+                self.writeln(';Tachie segment end')
     
     def _charas_show_up(self, command_capsule: List[str], commands: Dict[str, any]):
         old_pos_dict = {}
@@ -116,7 +117,7 @@ class Stage:
             chara_pos = self.markers[self.occupation_mode][layer_index]
             # This line depends on the naming strategy of fg asset, which is not a good choice.
             # TODO: Add kyori information into it.
-            fg_file = random.choice(self.asset_index['fg'][chara_id][exp_id])
+            fg_file = self.pick_new_stance(chara_id, exp_id)
             self.stance_record[chara_id] = fg_file.name
             self.stance_counter[chara_id] = 0
             command_capsule.append(f"@image left=\"{chara_pos}\" page=\"back\" layer=\"{layer_index}\" "
@@ -131,16 +132,10 @@ class Stage:
             chara_pos = self.markers[self.occupation_mode][layer_index]
             if command is None:
                 exp_id = self.current_stage[chara_id]
-                current_fg_full_name = self.stance_record[chara_id]
-                possible_fgs = list(filter(lambda fg: fg.name != current_fg_full_name, self.asset_index['fg'][chara_id][exp_id]))
-                if len(possible_fgs) == 0:
-                    self.stance_counter[chara_id] = 0
-                    continue
                 # TODO: Add kyori information into it.
-                fg_file = random.choice(possible_fgs)
             else:
                 exp_id, kyori = command
-                fg_file = random.choice(self.asset_index['fg'][chara_id][exp_id])
+            fg_file = self.pick_new_stance(chara_id, exp_id)
             self.stance_record[chara_id] = fg_file.name
             self.stance_counter[chara_id] = 0
             command_capsule.append(f"@image left=\"{chara_pos}\" page=\"back\" layer=\"{layer_index}\" " 
@@ -158,6 +153,7 @@ class Stage:
         command_capsule.append('@backlay')
         for chara_id in commands.keys():
             layer_index = self.stage_occupation.index(chara_id)
+            self.stance_record.pop(chara_id)
             if self.occupation_mode >= self.antei_level:
                 self.occupation_mode -= 1
                 self.stage_occupation.pop(layer_index)
@@ -186,7 +182,10 @@ class Stage:
             if chara_id is None:
                 continue
             exp_id = self.current_stage[chara_id]
-            fg_file = random.choice(self.asset_index['fg'][chara_id][exp_id])
+            expected_fg_file = list(filter(lambda path: path.name == self.stance_record[chara_id], self.asset_index['fg'][chara_id][exp_id]))
+            if len(expected_fg_file) != 1:
+                raise RuntimeError(f"Try to find stance {self.stance_record[chara_id]}, found out to find {expected_fg_file}")
+            fg_file = expected_fg_file[0]
             self.stance_counter[chara_id] = 0
             self.writeln(f"@image left=\"{pos}\" page=\"back\" layer=\"{layer_index}\" "
                             f"top=\"{self.chara_heights[chara_id]}\" storage=\"{fg_file.stem}\" visible=\"true\"")
@@ -205,9 +204,31 @@ class Stage:
         self.stance_record.clear()
         self.stack.clear()
 
-    def tick_line(self, speaker_id: str, render=True):
+    def pick_new_stance(self, chara_id: str, exp_id: str):
+        possible_fgs = self.asset_index['fg'][chara_id][exp_id]
+        if len(possible_fgs) == 1:
+            return possible_fgs[0]
+        first_choice = self.ransu % len(possible_fgs)
+        if chara_id in self.current_stage and self.stance_record[chara_id] == possible_fgs[first_choice].name:
+            return possible_fgs[(first_choice + 1) % len(possible_fgs)]
+        else:
+            return possible_fgs[first_choice]
+        
+
+    def tick_line(self, line_id: str, speaker_id: str, render=True):
         for key in self.stance_counter.keys():
             self.stance_counter[key] = self.stance_counter[key] + 1
+        if self.stance_counter[speaker_id] > 3:
+            self.stance_counter[speaker_id] = 0
+            stance_command = (self.current_stage[speaker_id], self.current_kyori[speaker_id])
+            update_commands = list(filter(lambda x: x.command_type == 'update', self.stack))
+            if len(update_commands) > 0:
+                update_command = update_commands[-1]
+                if speaker_id not in update_command.commands:
+                    update_command.commands[speaker_id] = None
+            else:
+                self.stack_command('update', speaker_id, stance_command)
+        self.ransu = int(line_id, base=16)
         if len(self.stack) > 0:
             self._run_stack(render)
         # TODO: Add facial expressions
